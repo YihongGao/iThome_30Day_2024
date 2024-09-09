@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: db
+    tier: data
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: db
+        tier: data
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+        ports:
+          - containerPort: 6379
+        volumeMounts:
+          - name: data-volume
+            mountPath: /usr/share/nginx/html
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+      volumes:
+        - name: data-volume
+          configMap:
+            name: static-data
+        - name: nginx-config
+          configMap:
+            name: db-nginx-config
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: static-data
+data:
+  index.html: |
+    {
+      "message": "Hello from ithome demo data!"
+    }
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-nginx-config
+data:
+  nginx.conf: |
+    events {}
+    http {
+        server {
+            listen 6379;
+            location / {
+                root /usr/share/nginx/html;
+                index index.html;
+            }
+        }
+    }
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: db
+    tier: data
+  name: db
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: db
