@@ -210,6 +210,9 @@ kubectl exec -it ${you frontend pod name} -- curl localhost:80
 # 小結
 以上就是我們 NetworkPolicy 的實作，並透過 [hubble] 這個使用 [eBPF] 技術的觀測工具，來檢視 Kubernetes 流量傳遞。
 
+到目前為止，我們更了解 Kubernetes 的核心組件
+明天會開始進入到 實作 CI/CD pipeline 的章節，會將 2023 介紹的陽春版 CI/CD pipeline 透過 kustomize、ArgoCD 實現更好維護的版本。
+
 # Refernce
 - [cilium 官方](https://cilium.io/)
 - [eBPF 官方](https://ebpf.io/)
