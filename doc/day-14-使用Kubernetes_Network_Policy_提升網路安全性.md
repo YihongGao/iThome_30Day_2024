@@ -1,5 +1,5 @@
 
-# Day-14 使用 Kubernetes Network Policy 提升網路安全性
+# Day-14 使用 Kubernetes NetworkPolicy 提升網路安全性
 
 # 前言
 以往透過 VM 或 實體機組成的伺服器架構，時常會將伺服器進行分層，將不同層的服務進行網路隔離，只允許必要的網路連線，降低服務被侵入時的風險。
@@ -9,20 +9,20 @@
 
 今天要介紹的 [NetworkPolicy] 能對 Pod 的網路流量進行管理，來讓攻擊者更難得手 與 降低安全事件的影響範圍。
 
-# Network Policy
-Network Policy 主要用來控制 Pod 間以及 Pod 與外部網路的流量。透過定義規則，NetworkPolicy 可以指定哪些 Pod 可以互相通訊，以及哪些 Pod 可以與外部資源交互。
+# NetworkPolicy
+NetworkPolicy 主要用來控制 Pod 間以及 Pod 與外部網路的流量。透過定義規則，NetworkPolicy 可以指定哪些 Pod 可以互相通訊，以及哪些 Pod 可以與外部資源交互。
 
 簡單來說，能當作 Kubernetes 內部的防火牆。
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/1*HtExF_QoSjK7MsL4-218PA.png](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*HtExF_QoSjK7MsL4-218PA.png)
-圖檔來源 : [Deep-dive: Kubernetes Network Policy in GKE]
+圖檔來源 : [Deep-dive: Kubernetes NetworkPolicy in GKE]
 
-Network Policy 將流量分為
+NetworkPolicy 將流量分為
 - Ingress: 簡單來說就是入站流量，任何對 Pod 發送流量都由  Ingress rule 判斷允許/拒絕該流量。
 
 - Egress: 出站流量，任何由 Pod 內部發送出去的流量都由 Ingress rule 判斷允許/拒絕該流量。   
   > 📘 例如 Pod 中的應用程序連向其他 Pod、外部服務或資料庫，都屬於 Egress
 
-## Network Policy 範例
+## NetworkPolicy 範例
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -79,6 +79,7 @@ spec:
 ## 使用案例
 透過上面的範例，我們知道能透過 Label selector 將 NetworkPolicy 套用到指定的 Pod 上那是不是我們能借鏡 [three-tier architecture] 將服務大致分為不同 tier，搭配 NetworkPolicy 降低資料洩漏的風險 
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240907/截圖-2024-09-07-下午10.36.16.70aaa5clyg.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240907/截圖-2024-09-07-下午10.36.16.70aaa5clyg.webp)
+
 - `Frontend / Gateway tier`: 負責接受來自 Cluster 外部的流量，通常會負責處理認證授權，通過後將合法流量轉發到其他內部服務，此類常見的服務如 API Gateway、nginx 等
 - `Backend tier`: 負責實現商業邏輯的服務，通常是一個 API 服務，如 Tomcat、Django。
 - `Data tier`: 儲存資料的服務，如資料庫。
@@ -229,9 +230,9 @@ https://kubernetes.io/docs/concepts/services-networking/network-policies/#prereq
 
 # Refernce
 - [Kubernetes 官方文件](https://kubernetes.io/zh-cn/docs/concepts/services-networking/network-policies/#networkpolicy-resource)
-- [Deep-dive: Kubernetes Network Policy in GKE]
+- [Deep-dive: Kubernetes NetworkPolicy in GKE]
 
-[Deep-dive: Kubernetes Network Policy in GKE]: https://medium.com/google-cloud/deep-dive-kubernetes-network-policy-in-gke-e9842ec6b1be
+[Deep-dive: Kubernetes NetworkPolicy in GKE]: https://medium.com/google-cloud/deep-dive-kubernetes-network-policy-in-gke-e9842ec6b1be
 
 [橫向移動 (lateral movement)]: https://www.wiz.io/blog/lateral-movement-risks-in-the-cloud-and-how-to-prevent-them-part-2-from-k8s-clust
 [three-tier architecture]: https://www.ibm.com/topics/three-tier-architecture
