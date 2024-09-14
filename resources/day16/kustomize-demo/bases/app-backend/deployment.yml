@@ -5,7 +5,6 @@ metadata:
     app: app-backend
   name: app-backend
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: app-backend
@@ -23,10 +22,10 @@ spec:
         resources: 
           requests:
             cpu: "300m"
-            memory: "300Mi"
+            memory: "512Mi"
           limits:
             cpu: "1000m"
-            memory: "500Mi"
+            memory: "768Mi"
         startupProbe:
           httpGet:
             path: /actuator/health/liveness
@@ -45,9 +44,6 @@ spec:
             port: 8080
           failureThreshold: 3
           periodSeconds: 10
-        env:  
-        - name: PRODUCT_HOST
-          value: http://product-backend.ithome.svc.cluster.local:80
         envFrom: # 將 ConfigMap 注入此容器
           - configMapRef:
               name: demo-config # 注入的 ConfigMap 名稱

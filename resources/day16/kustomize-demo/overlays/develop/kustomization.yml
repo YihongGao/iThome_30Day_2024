@@ -1,10 +1,8 @@
-# Usage: 
-# kustomize build . | kubectl apply -f -
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# 關聯到的 resource 都會部署到 ithome namespace
-namespace: ithome
+# 關聯到的 resource 都會部署到 ithome-dev namespace
+namespace: ithome-dev
 
 resources: 
 - ./configs

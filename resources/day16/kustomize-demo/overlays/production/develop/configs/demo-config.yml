@@ -1,8 +1,9 @@
 
 apiVersion: v1
 data:
+  PRODUCT_HOST: http://product-backend.ithome.svc.cluster.local:80
   APP.ENV: kind
-  APP.WELCOME.MESSAGE: Hello, ConfigMap from develop enviorment.
+  APP.WELCOME.MESSAGE: Hello, ConfigMap from `Product` enviorment.
 kind: ConfigMap
 metadata:
   creationTimestamp: null
