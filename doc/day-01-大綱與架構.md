@@ -1,4 +1,3 @@
-
 # Day-01-大綱與架構
 
 # 前言
@@ -22,7 +21,7 @@
   - 藍綠部署、金絲雀部署方案
     - ArgoRollout
     - flipt
-  - DevSecOps 提高系統安全性
+  - 透過 DevSecOps 提高系統安全性
 
 不過近期筆者使用的生態系改到 Github 與 Google cloud plaform，故預計最終完成的架構會改如下
 ![architecture](https://github.com/YihongGao/picx-images-hosting/raw/master/20240818/架構圖.1.4qr8wr02xp.webp)
