@@ -1,0 +1,44 @@
+# Usage: 
+# kustomize build . | kubectl apply -f -
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 關聯到的 resource 都會部署到 ithome namespace
+namespace: ithome
+
+resources: 
+- ./configs
+- ../../bases/app-backend
+- ../../bases/product-backend
+
+
+patches:
+# used lower cpu/memory requests
+- patch: |-
+    - op: replace 
+      path: /spec/template/spec/containers/0/resources/requests/cpu
+      value: "100m"
+    - op: replace 
+      path: /spec/template/spec/containers/0/resources/requests/memory
+      value: "300Mi"
+  target:
+    kind: Deployment
+    name: app-backend|product-backend
+# used lower maxReplicas config
+- patch: |-
+    - op: replace 
+      path: /spec/minReplicas
+      value: 1
+    - op: replace 
+      path: /spec/maxReplicas
+      value: 2
+  target:
+    kind: HorizontalPodAutoscaler
+    name: app-backend|product-backend
+
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: latest
+- name: luciferstut/product-backend-for-ithome2024:none
+  newTag: latest

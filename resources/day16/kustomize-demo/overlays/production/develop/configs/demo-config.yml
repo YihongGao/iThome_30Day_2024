@@ -1,0 +1,10 @@
+
+apiVersion: v1
+data:
+  APP.ENV: kind
+  APP.WELCOME.MESSAGE: Hello, ConfigMap from develop enviorment.
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: demo-config
+
