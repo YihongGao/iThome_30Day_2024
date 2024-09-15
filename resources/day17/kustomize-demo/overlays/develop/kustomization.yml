@@ -1,0 +1,71 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 關聯到的 resource 都會部署到 ithome-dev namespace
+namespace: ithome-dev
+
+resources: 
+- ./configs
+- ../../bases/app-backend
+- ../../bases/product-backend
+
+patches:
+
+# inline JSON6902 Patch
+# - patch: |-
+#     - op: replace
+#       path: /spec/template/spec/containers/0/resources/requests/cpu
+#       value: "100m"
+#     - op: replace 
+#       path: /spec/template/spec/containers/0/resources/requests/memory
+#       value: "300Mi"
+#   target:
+#     kind: Deployment
+#     name: app-backend|product-backend
+
+# JSON6902 patch
+# - path: patchs/lower-resource-requests-json6902.yml
+#   target:
+#     kind: Deployment
+#     name: app-backend|product-backend
+
+# inline Strategic Merge Patch
+# - patch: |-
+#       apiVersion: apps/v1
+#       kind: Deployment
+#       metadata:
+#         name: app-backend
+#       spec:
+#         template:
+#           spec:
+#             containers:
+#               - name: apps
+#                 resources:
+#                   requests:
+#                     cpu: "100m"
+#                     memory: "300Mi"
+# - patch: |-
+#       apiVersion: apps/v1
+#       kind: Deployment
+#       metadata:
+#         name: product-backend
+#       spec:
+#         template:
+#           spec:
+#             containers:
+#               - name: apps
+#                 resources:
+#                   requests:
+#                     cpu: "100m"
+#                     memory: "300Mi"
+
+# Strategic Merge Patch
+- path: patchs/app-backend-low-resource-request.yml
+- path: patchs/product-backend-low-resource-request.yml
+
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: latest
+- name: luciferstut/product-backend-for-ithome2024:none
+  newTag: latest

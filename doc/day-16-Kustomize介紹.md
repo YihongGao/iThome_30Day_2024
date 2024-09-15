@@ -223,6 +223,6 @@ kubectl describe deployments.apps product-backend -n ithome-dev
 # 小結
 今天初步應用了 Kustomize 的幾個核心概念，能依照不同環境的需求對配置進行調整，且避免 Copy/Paste，讓管理 YAML 時更為容易。
 
-明天會更詳細的說明 `Patchs` 的用法 與 筆者的使用案例，讓讀者使用時能更得心應手。
+明天會更詳細的說明 `Patchs` 的用法，讓讀者使用時能更得心應手。
 
 # Refernce
