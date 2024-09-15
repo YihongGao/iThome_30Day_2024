@@ -9,7 +9,6 @@ resources:
 - ../../bases/app-backend
 - ../../bases/product-backend
 
-
 patches:
 # used lower cpu/memory requests
 - patch: |-
@@ -33,7 +32,6 @@ patches:
   target:
     kind: HorizontalPodAutoscaler
     name: app-backend|product-backend
-
 
 images:
 - name: luciferstut/app-backend-for-ithome2024:none
