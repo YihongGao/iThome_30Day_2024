@@ -1,4 +1,3 @@
-
 # Day-03-Kubernetes Architecture 介紹 - Worker Node 
 
 # Kubernetes Cluster Architecture
@@ -15,7 +14,7 @@
 
 ## kubelet
 kubelet 是運行於每個 Worker Node 的一個 Process，負責監控與管理 Pod，負責以下任務
-- **監控與管理 Pod**：kubelet 會不斷監控節點上的 Pod，確保它們按照定義的狀態（如規範的容器數量與配置）正常運行。如果有 Pod 異常，kubelet 會嘗試重新啟動。
+- **監控與管理 Pod**：kubelet 會不斷監控節點上的 Pod，確保它們按照定義的狀態（如規範的容器數量與配置）正常運行。如果有 Pod 異常，kubelet 會透過與 container runtime（例如 containerd 或 Docker）協同工作來重新啟動容器
 
 - **接收 Control Plane 指令**：kubelet 與 Control Plane 的 kube-apiserver 保持持續通信。當 kube-apiserver 下發新的 Pod 配置或更新時，kubelet 會接收並執行這些指令，啟動或停止容器。
 
