@@ -1,0 +1,12 @@
+- op: add
+  path: /spec/template/spec/containers/0/ports/-
+  value:
+    name: metrics
+    containerPort: 9000
+    protocol: TCP
+- op: add
+  path: /spec/template/metadata/labels/gmp-prometheus.io~1scrape
+  value: "true"
+- op: add
+  path: /spec/template/metadata/labels/monitor
+  value:  micrometer-monitor

@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 關聯到的 resource 都會部署到 ithome-pre-production namespace
+namespace: ithome-pre-production
+
+resources: 
+- ./configs
+- ../../bases/app-backend
+- ../../bases/product-backend
+- ../../bases/product-schedule
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: "1.0"
+- name: luciferstut/product-backend-for-ithome2024:none
+  newTag: "1.0"
+
+components:
+  - ../../components/asap-rolling-strategy
