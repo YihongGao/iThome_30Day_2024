@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 關聯到的 resource 都會部署到 ithome-dev namespace
+namespace: ithome-dev
+
+resources: 
+- ./configs
+- ../../bases/app-backend
+- ../../bases/product-backend
+- ../../bases/product-schedule
+
+patches:
+- path: patchs/app-backend-low-resource-request.yml
+- path: patchs/product-backend-low-resource-request.yml
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: latest
+- name: luciferstut/product-backend-for-ithome2024:none
+  newTag: latest
+
+components:
+  - ../../components/asap-rolling-strategy

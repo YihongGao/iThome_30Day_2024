@@ -1,0 +1,7 @@
+- op: add
+  path: /spec/replicas
+  value: 1
+- op: add
+  path: /spec/strategy
+  value: 
+    type: Recreate

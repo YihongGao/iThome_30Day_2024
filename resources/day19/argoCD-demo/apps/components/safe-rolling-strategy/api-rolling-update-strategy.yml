@@ -1,0 +1,6 @@
+- op: replace
+  path: /spec/strategy
+  value: 
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
