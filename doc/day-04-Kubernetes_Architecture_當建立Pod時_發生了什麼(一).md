@@ -2,29 +2,26 @@
 # Day-04-Kubernetes Architecture 介紹 - 當建立 Pod 時，發生了什麼(一)
 
 # 前言
-前兩天我們更認識了 Kubernetes 的核心組件，今天我們要來聊聊，當你要求 Kubernetes 建立 Pod 的時候，Kubernetes 中到底發生了什麼事情，才能把 Pod 建立出來，希望透過瞭解這個過程，再讀者開發或維護時更流暢安心。
+前幾天我們深入了解了 Kubernetes 的核心組件，今天要來聊聊當我們 **向 Kubernetes 發出建立 Pod 的請求** 時，背後到底發生了哪些事情，Pod 是如何被建立出來的。透過認識這個過程，希望能讓讀者在開發或維護 Kubernetes 時，更加順暢且安心。
+
 
 # Kubernetes Cluster Architecture
 ![Archtitecture](https://kubernetes.io/images/docs/kubernetes-cluster-architecture.svg)
 圖檔來源 [Kubernetes 官方文件](https://kubernetes.io/docs/concepts/architecture/)
 
 # kubectl
-先快速介紹當你使用 `kubectl` 時，kubectl 這個 command line tool 做了什麼。
+當你使用 kubectl 指令時，kubectl 這個指令行工具會在 Client 端進行以下任務：
 
-使用 `kubectl` 指令時，會在 Client 端進行以下任務
-1. 基本檢核：將明確不會成功的請求再 Client 返回錯誤訊息，減少 kube-apiserver 壓力。    
-    kubectl 會將可用的資源版本規範，使用 OpenAPI 格式快取在本地 `~/.kube/cache` 目錄中，當使用 `kubectl` 操作時會使用它們進行檢查。
+基本檢核：kubectl 會在本地進行一些基本的檢查，例如語法錯誤或無效的資源名稱，將明顯不會成功的請求在 Client 端返回錯誤訊息，減少 kube-apiserver 的壓力。此外，kubectl 會將可用的資源版本規範，使用 OpenAPI 格式快取在本地 ~/.kube/cache 目錄中，並在操作時根據這些規範進行初步檢查。
 
-2. 客戶端身份憑證：於本地找尋身分憑證，用於後續提供給 kube-apiserver 進行身份驗證，找尋優先序如下
-    - 命令列參數：若使用 kubectl 指令時明確指定了憑證（例如 --kubeconfig、--certificate-authority、--client-certificate、--client-key 等）時， kubectl 會優先使用這些參數中指定的憑證。
+客戶端身份憑證：kubectl 會根據以下優先順序來尋找身份憑證，用於後續與 kube-apiserver 進行身份驗證：
+- 命令列參數：若明確指定了憑證（如 --kubeconfig、--certificate-authority 等），kubectl 會優先使用這些參數指定的憑證。
+- 環境變數：如果設置了 KUBECONFIG 環境變數，kubectl 會使用該變數指定的配置檔案來尋找憑證。
+- 預設 kubeconfig 檔案：若未設置 KUBECONFIG 變數，kubectl 會使用 ~/.kube/config 檔案中的預設配置來尋找憑證。
 
-    - 環境變數：若設置了 KUBECONFIG 環境變數，kubectl 會使用該變數指定的配置檔案路徑來尋找憑證。
+將指令封裝成 Http 請求：kubectl 會將操作封裝成 HTTP 請求，透過 RESTful API 發送至 kube-apiserver，完成對 Kubernetes 資源的操作。
 
-    - 預設的 kubeconfig file：如果沒有設置 KUBECONFIG 環境變數，kubectl 會使用位於 `~/.kube/config` 的預設配置檔案來查找憑證。
-    
-3. 將指令封裝成 Http 請求：真正向 `kube-apiserver` 發出請求
-    
-從這些任務能發現，如同 [Day-02-Kubernetes Architecture 介紹 - Control Plane] 的介紹，我們知道 **要操作 Kubernetes 資源**，都必須要透過 `kube-apiserver` 提供的 RESTful API，當我們使用 `kubectl` 操作時也是如此。
+如同 [Day-02-Kubernetes Architecture 介紹 - Control Plane](https://ithelp.ithome.com.tw/articles/10347299) 所述，所有的 Kubernetes 資源操作都必須通過 kube-apiserver 提供的 RESTful API 來進行，kubectl 也不例外。
 
 # 建立 Pod 的流程
 ## 1. Http 請求從 kubectl 送出 (in Client)
@@ -37,19 +34,17 @@
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/0*tYNAp-JiOoF7-frD.png](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*tYNAp-JiOoF7-frD.png)
 圖檔來至: [itnext.io/what-happens-when-you-create-a-pod-in-kubernetes](https://itnext.io/what-happens-when-you-create-a-pod-in-kubernetes-6b789b6db8a8)
 
-當 `kube-apiserver` 收到 Http Request 請求，會從中取得身份憑證，並驗證是否為此 Cluster 的合法用戶(認證 Authentication)，並檢查此用戶是否有操作該資源的權限(授權 Authorization)。
+當 kube-apiserver 收到 HTTP Request 請求後，會首先從中取得身份憑證，並進行身份認證（Authentication），確認該用戶是否為此 Cluster 的合法用戶。接著，進行授權（Authorization），檢查該用戶是否具備操作該資源的權限。
 
-當通過 認證(Authentication) 與 授權(Authorization) 兩個校驗後，還需要通過一關 `Admission controllers` 的檢查。
-簡單來說 `Admission controllers` 是一串處理鏈，具備兩種能力
-- 調整請求資源的值
-- 檢查請求資源的值是否正確，當有檢核不通過時，會返回此請求，中斷此操作。
+在通過認證（Authentication）和授權（Authorization）後，請求還必須通過 Admission controllers 的檢查。Admission controllers 是一組處理鏈，它們具備兩種主要功能：
 
-以下列出幾個常見的 `Admission controllers`
-- ResourceQuota：   
-    當 Pod 請求的計算資源超過 Namespace 中 [ResourceQuota] 的配置，則中斷此請求
-- LimitRanger：
-    - 當 Pod 未指定計算資源時，給予配置中的預設值
-    - 當 Pod 指定的計算資源超過 [LimitRanger] 配置時，則中斷此請求
+- 調整請求資源的值（Mutating Admission Controllers）
+- 檢查請求資源的值是否正確（Validating Admission Controllers）。如果檢查未通過，則會拒絕該請求並返回錯誤。
+
+以下是常見的 Admission controllers：
+
+- **ResourceQuota**：當 Pod 請求的資源超過 Namespace 中設定的資源配額時，請求會被拒絕。
+- **LimitRanger**：當 Pod 未指定資源請求時，將給予預設的資源值；若 Pod 請求的資源超出 LimitRanger 配置的限制，請求也會被拒絕。
 
 ## 3. 將資料持久化到 etcd (kube-apiserver)
 終於通過層層檢查，讓建立 Pod 的請求內容，送到了 Kubernetes 的資料庫：`etcd`。
@@ -60,13 +55,16 @@
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/0*vQ-KQONXaQ_t4EQ2.png](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*vQ-KQONXaQ_t4EQ2.png)
 圖檔來至: [itnext.io/what-happens-when-you-create-a-pod-in-kubernetes](https://itnext.io/what-happens-when-you-create-a-pod-in-kubernetes-6b789b6db8a8)
 
-當 scheduler 從 kube-apiserver 發現有狀態處於 Pending 的 Pod 時，它會進行兩個主要階段的操作：
-過濾：scheduler 會依據 Pod 的需求(Affinity 和 anti-Affinity 等配置)和 Node 的資源狀況，過濾出一個符合條件的 Node 清單。
-評分：對於篩選出的 Node，scheduler 會根據多種因素（如資源利用率）進行評分，然後選出得分最高的 Node。
-最後，scheduler 會使用 kube-apiserver 的 API 將 Pod 與選中的 Node 綁定（Binding）。
-> 📘 這裡的 綁定(Binding) 是指 scheduler 更新 Pod spec 中的 NodeName 欄位，scheduler 並不是實際建立 Pod 的組件。
+當 scheduler 從 kube-apiserver 發現有處於 Pending 狀態的 Pod 時，它會進行兩個主要階段的操作：
+- **過濾**：scheduler 會依據 Pod 的需求（如 Affinity 和 anti-Affinity 等配置）以及 Node 的資源狀況，過濾出一個符合條件的 Node 列表。
+- **評分**：對於篩選出的 Node，scheduler 會根據多種因素（如資源利用率、網路延遲等）進行評分，然後選出得分最高的 Node。
 
-到目前為止，這個 Pod 資訊仍只是存在 etcd 中的一筆資料而已，尚未有任何 container 被這個操作給啟動。
+最後，scheduler 會使用 kube-apiserver 的 API 將 Pod 與選中的 Node 綁定（Binding）。
+
+📘 這裡的綁定（Binding）是指 scheduler 更新 Pod 的 `spec.nodeName` 欄位。scheduler 並不是負責實際建立 Pod 的組件，Pod 的實際啟動由該 Node 上的 kubelet 負責。
+
+到目前為止，這個 Pod 的資訊仍只是一筆存在 etcd 中的資料，尚未有任何 container 因為這個操作而被啟動。
+
 
 ## 小結
 今天介紹了 建立 Pod 旅程的前半段，這些事件大多都發生在 Control Plane 中
