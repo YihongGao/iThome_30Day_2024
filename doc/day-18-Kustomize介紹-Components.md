@@ -204,9 +204,10 @@ patches:
   value:  micrometer-monitor
 ```
 
-# 小結
-透過 components，Kustomize 能有效處理配置的模組化與可重用性問題。它允許我們將基礎資源（base YAML）保持簡單，並透過 components 來進行組合與功能擴展。最後，使用 patches 為特定環境進行自訂，實現一個靈活且具備高維護性的 YAML 管理策略。
+透過 Kustomize 的 components 能有效處理配置的模組化與可重用性問題。它允許我們將基礎資源（base YAML）保持簡單，並透過 components 來進行組合與功能擴展。最後，使用 patches 為特定環境進行自訂，實現一個靈活且具備高維護性的 YAML 管理策略。
 
+# 小結
+利用 Kustomize 改善的 YAML 管理之後，明天會來介紹 Argo CD 實現 pull base 的 GitOps，讓 manifast file 與 Kubernetes 有更強的一致性。
 
 # Refernce
 - [Kustomize 官方文件](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#name-and-kind-changes)
