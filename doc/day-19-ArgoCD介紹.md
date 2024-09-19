@@ -182,7 +182,7 @@ kubectl create namespace ithome
 # 小結
 今天初步體驗了 ArgoCD 的使用方式 與 ArgoCD 能自動地保持 Git Repo 與 Kubernetes 一致性的功能，這能大幅提高使用 GitOps 模式管理時的信心度與可維護性，避免 Git Repo 與 Kubernetes 環境狀態脫鉤太久後，沒有人有勇氣再次將 Git Repo push 到 Kubernetes 中。
 
-明天會繼續介紹 ArgoCD Application 的其他屬性。
+明天會繼續介紹 ArgoCD 的架構與運作原理。
 
 # Refernce
 - [ArgoCD 官方文件](https://argo-cd.readthedocs.io/en/stable/)
