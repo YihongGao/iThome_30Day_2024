@@ -2,7 +2,7 @@
 # Day-19 ArgoCD 介紹
 
 # 前言
-去年我透過 GitLab CI 實現了 Push base 的 GitOps，能自動將 Git Repo 中的 YAML 部署至 Kubernetes
+去年我透過 GitLab CI 實現了 Push-based 的 GitOps，能自動將 Git Repo 中的 YAML 部署至 Kubernetes
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.33.26lfru5jsv.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.33.26lfru5jsv.webp)
 
 雖然實現容易且架構簡單，但仍有許多值得改善的地方，例如
@@ -15,7 +15,7 @@
 # 什麼是 ArgoCD
 ![https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5JxBwyzDrpsoZJboHIdNCwZMma8GGgQ1uuQ&s](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5JxBwyzDrpsoZJboHIdNCwZMma8GGgQ1uuQ&s)
 
-ArgoCD 是一個基於 Pull base GitOps 模型的 Kubernetes 持續交付工具。當 Git Repo 中的 YAML 定義更新時，會將異動自動部署至 Kubernetes，並持續監控 Kubernetes 與 Git Repo 的狀態，並保持狀態同步。
+ArgoCD 是一個基於 Pull-based GitOps 模型的 Kubernetes 持續交付工具。當 Git Repo 中的 YAML 定義更新時，會將異動自動部署至 Kubernetes，並持續監控 Kubernetes 與 Git Repo 的狀態，並保持狀態同步。
 
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.43.8s39iv9lry.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.43.8s39iv9lry.webp)
 
@@ -155,9 +155,9 @@ kubectl create namespace ithome
   ```
   > 📘 若沒有自動建立回來，能檢查一下 argocd-demo 中的 **SYNC POLICY** 是否有 Enable `AUTOMATED` 與 `SELF HEAL`
 
-  能看到該 deployment 會自動被建立回來，這就是 pull base 與 push base GitOps 的最大差異，
-  - ArgoCD(pull base) 允許持續維持 Kubernetes 狀態與 Git Repo 中 YAML 的宣告相同。
-  - push base 需要依賴頻繁的發佈與嚴謹的工作流程來維持。
+  能看到該 deployment 會自動被建立回來，這就是 Pull-based 與 Push-based GitOps 的最大差異，
+  - ArgoCD(Pull-based) 允許持續維持 Kubernetes 狀態與 Git Repo 中 YAML 的宣告相同。
+  - Push-based 需要依賴頻繁的發佈與嚴謹的工作流程來維持。
 
 # 半自動化的方式
 若讀者的公司規範不適合使用全自動化作業時，ArgoCD 也能實現半自動化並提供良好的 Diff 介面來檢視差異。

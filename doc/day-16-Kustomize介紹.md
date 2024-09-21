@@ -2,7 +2,7 @@
 # Day-16 Kustomize 介紹
 
 # 前言
-再 [2023 年的鐵人賽系列的分享](https://ithelp.ithome.com.tw/articles/10334732)中，我們實現了簡易版的 CI/CD pipeline，透過 push base 的方式實現 GitOps。
+再 [2023 年的鐵人賽系列的分享](https://ithelp.ithome.com.tw/articles/10334732)中，我們實現了簡易版的 CI/CD pipeline，透過 Push-based 的方式實現 GitOps。
 ![old CI/CD](https://cdn.jsdelivr.net/gh/YihongGao/picx-images-hosting@master/20230913/架構圖.5holmyq61hg0.webp)
 
 但其中仍有許多挑戰，例如

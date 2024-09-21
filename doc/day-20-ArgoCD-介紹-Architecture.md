@@ -1,5 +1,6 @@
 
-# Day-20 ArgoCD Architecture 介紹
+# Day-20 ArgoCD 介紹 - Architecture
+
 
 # 前言
 昨天我們體驗透過 ArgoCD 來實踐 GitOps，利用 Git 來管理/部署 Kubernetes Resource。  
