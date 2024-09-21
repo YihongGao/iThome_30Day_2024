@@ -1,4 +1,3 @@
-
 # Day-09-Kubernetes 如何調度你的 Pod - Pod Topology Spread Constraints
 
 # 前言
@@ -15,14 +14,15 @@
 這兩種問題可能會成為降低可用性的因素，所以今天要介紹的 `Pod Topology Spread Constraints` 就是專門解決此問題而生的設計的。
 
 # Pod Topology Spread Constraints
-`Pod Topology Spread Constraints` 的目的就是最大程度的打散 Pod 到不同的 topology上，其核心是一個叫 `skew` 數據，每組 Pod 在不同 topology 時，都會依據 Pod 副本數量計算出對應的 `skew` 值。
+`Pod Topology Spread Constraints`` 的目的是將 Pod 儘可能均勻地分散到不同的 **topology** 中，例如不同的 Node、Region 或 Zone。其核心概念是 **skew**，即每組 Pod 在不同 topology 中的分布差異。
 
-計算公式為：skew = Pods **number** matched in **current** topology - **min** Pods matches in a topology
+### 計算公式為
+skew = Pods **number** matched in **current** topology - **min** Pods matches in a topology
 
 ![https://www.hwchiu.com/assets/images/SkWAL7S33-08bbfe0f59afad8380f63e1af86df610.png](https://www.hwchiu.com/assets/images/SkWAL7S33-08bbfe0f59afad8380f63e1af86df610.png)
 圖檔來源: [HWCHIU 學習筆記 / 解密 Assigning Pod To Nodes(下)]
 
-以上圖為例，有三個 topology，目前分別運行著 `3,2,1` 個 Pod，故我們能知道 **min** Pods matches in a topology 的值為 `1`，而 `skew` 是每個 topology 獨立計算的所以套用公式如下
+以上圖為例，有三個 topology 分別運行著 3、2、1 個 Pod，因此可以計算出最少 Pod 數量 min Pods matches in a topology 為 1。每個topology的 skew 值如下：
 
 - **min** Pods matches in a topology : `1`
 1. Topology A
@@ -35,7 +35,8 @@
     - Pods **number** matched in **current** topology: `1`
     - skew: `0 (1 - 1)`
 
-了解如何計算之後，`Pod Topology Spread Constraints` 的配置就很容易懂了
+瞭解 skew 計算方式後，Pod Topology Spread Constraints 的配置變得更為直觀。
+
 ```yaml
 spec:
   topologySpreadConstraints:
@@ -45,12 +46,12 @@ spec:
     whenUnsatisfiable: <string>
     
 ```
-- `topologyKey`: 依據什麼 Node Label 來劃分 topology，用法跟 Inter-Pod Affinity 一樣
-- `maxSkew`: 該 topology 中的 Skew 最大限制，簡單來說就是 Pod 不均勻的程度
-- `labelSelector`: 哪些 Pod 需要計算
-- `whenUnsatisfiable`: 當全部的 topology 都不滿足 `maxSkew` 的條件時，該如何處理
+- `topologyKey`: 定義按哪個 Node Label 來劃分topology，類似於 Inter-Pod Affinity 的用法。
+- `maxSkew`: 每個 topology 中的最大 skew 限制，即 Pod 分布不均勻的容忍度。
+- `labelSelector`: 指定哪些 Pod 需要參與計算。
+- `whenUnsatisfiable`: 當全部的 topology 都不滿足 `maxSkew` 的條件時的處理方式
     - `DoNotSchedule`: (Default) 不調度該 Pod，該 Pod 會處於 Pending
-    - `ScheduleAnyway`: 仍然調度該 Pod，並優先選 Skew 低的 topology。
+    - `ScheduleAnyway`: 仍然調度該 Pod，並優先選擇 Skew 低的 topology。
 
 我們來看一個使用範例
 ![https://kubernetes.io/images/blog/2020-05-05-introducing-podtopologyspread/api.png](https://kubernetes.io/images/blog/2020-05-05-introducing-podtopologyspread/api.png)
@@ -64,20 +65,18 @@ spec:
 與 `Inter-Pod Affinity` 相比較，`Pod Topology Spread Constraints` 提供的 `maxSkew` 與 `whenUnsatisfiable`，讓 Pod 能均勻分佈到每個 topology，且不再有每個 topology 只能運行一個 Pod 的限制，大大的提高資源利用率。
 
 ## 進階用法
-某些情境下，Pod 的分佈還是會與 `maxSkew` 出現一些非預期情況，比如 Deployment 進行 Rolling update 時，可能有以下情境
-
-當 Rolling update 時，新舊版本的 Pod 都會被 `LabelSelectors` 選中，故在新舊 Pod 切換期間可能有下情況發生
+在某些情境下，Pod 的分佈可能與 `maxSkew` 設定不符，特別是在 Deployment 進行 Rolling Update 時，會出現新舊版本的 Pod 同時被 `LabelSelectors` 選中的情況。
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/0*DSX-uCIKI-MlW92B](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*DSX-uCIKI-MlW92B)
 圖檔來自: [Avoiding Kubernetes Pod Topology Spread Constraint Pitfalls]
 
-Pod 目前均勻分佈在三個 topology，但有一個是 舊版本，因為三個 topology 的 `skew` 皆為 0，故可能部署到任何一個 topology，所以可能發生以下情況
+假設目前 Pod 均勻分佈在三個topology中，其中一個 Pod 為舊版本。因為三個 topology 的 `skew` 值皆為 0，新的 Pod 可以被部署到任何一個 topology。這可能導致以下情況：
 
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/0*nCdvNNKaerBoJLFg](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*nCdvNNKaerBoJLFg)
 圖檔來自: [Avoiding Kubernetes Pod Topology Spread Constraint Pitfalls]
 
-第三個 新版本 Pod 被調度到 AZ1，而 AZ3 的 舊版本 Pod 因 Rolling update 完成，被 Terminated 了，最終導致 Pod 分佈變成 `2,1,0` 違反了 `maxSkew: 1`。
+例如，第三個新版本的 Pod 被調度到 AZ1，而 AZ3 的舊版本 Pod 在完成 Rolling Update 後被 Terminated，最終導致 Pod 分佈變為 `2,1,0`，違反了 `maxSkew: 1` 的限制。
 
-這時候需要搭配 `Pod Topology Spread Constraints` 的另一個`matchLabelKeys` 屬性 與 Deployment 會替 Pod 自動打的 label `pod-template-hash`。
+為了避免這種情況，應該使用 **Pod Topology Spread Constraints** 的 `matchLabelKeys` 屬性，搭配 Deployment 自動為 Pod 添加的 `pod-template-hash` label。
 > 📘 每當 Deployment 的 `spec.template` 更改時，都會得到一個 hash 值，Pod 上能透過 `pod-template-hash` label 獲取該 hash 值。
 
 Deployment yaml 片段 範例如下：
@@ -97,13 +96,13 @@ spec:
     - pod-template-hash
 ```
 
-當在計算 `skew` 時，就會因為 `pod-template-hash` label value 的不同，而分開計算 `skew` 值，回到 rolling update 的例子
+當在計算 `skew` 時，因 `pod-template-hash` label 的值不同，會將新舊版本的 Pod 分開計算 `skew`。回到 Rolling Update 的例子，這次的計算結果如下：
 
 ![https://miro.medium.com/v2/resize:fit:1400/format:webp/0*DSX-uCIKI-MlW92B](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*DSX-uCIKI-MlW92B)
 圖檔來自: [Avoiding Kubernetes Pod Topology Spread Constraint Pitfalls]
 
 這次計算如下
- - **min** Pods matches in a topology : `0` (因為舊版本的不計算在內，而 AZ3 無任何匹配的 Pod，故為 0)
+ - **min** Pods matches in a topology : `0` (因為舊版本的不計算在內，而 AZ3 無任何匹配的 Pod，因此為 0)
 1. Topology A
     - Pods **number** matched in **current** topology: `1`
     - skew: `1 (1 - 0)`
@@ -114,10 +113,12 @@ spec:
     - Pods **number** matched in **current** topology: `0`
     - skew: `0 (0 - 0)`
 
-此時，新版本的第三個 Pod 就會被正確均勻分佈到 AZ3。
+**因此，第三個新版本的 Pod 將被正確地均勻分佈到 AZ3。**
 
 # 小結
-今天我們學到了如何透過 `Pod Topology Spread Constraints` 讓 Pod 均勻分佈到 topology 達成高可用，也保持良好的資源利用率，當 Worker Node 發生故障時，就能盡量降低服務中斷的風險。
+`Pod Topology Spread Constraints` 提供了一個有效的機制，確保 Pod 的均勻分佈。透過設定 `maxSkew` 和 `topologyKey`，避免 Pod 過度集中於特定topology 內，進而提升應用的高可用性與資源利用效率。
+
+此外，配合 `matchLabelKeys` 和 `pod-template-hash`，可以避免新舊版本的 Pod 被誤算在同一 topology 中，進一步保證更新過程中的分佈一致性與資源平衡。這樣的機制不僅增強了 Kubernetes 調度的靈活性，也確保了部署時的穩定性與可擴展性。
 
 # Refernce
 - [kubernetes 官方文件](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/)
