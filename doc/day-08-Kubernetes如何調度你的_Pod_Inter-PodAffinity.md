@@ -1,4 +1,3 @@
-
 # Day-08-Kubernetes 如何調度你的 Pod - Inter-Pod Affinity
 
 # 前言
@@ -153,8 +152,9 @@ redis-5f5d8dd5d4-nqxgw   1/1     Running   0          33m   10.244.1.4    ithome
     - 綁定有特定硬體設備的 Node
     - 依照用途規劃 Node 職責，避免不同產品互相影響
     - 合規需求，有些法規要求資料只能保存在特定地理位置
-- Inter-Pod Anti-Affinity
     - 將耦合度高的服務部署在一起，減少網路延遲
+    
+- Inter-Pod Anti-Affinity
     - 將資源競爭高的服務分散到不同 Node，減少資源瓶頸(network、CPU)
 
 但若是希望為了高可用性，要讓 Pod 分散時，使用上還是會遇到一些問題
