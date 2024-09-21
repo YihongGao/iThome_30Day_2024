@@ -2,15 +2,15 @@
 # Day-15 使用 Kubernetes NetworkPolicy 提升網路安全性 - 實作篇
 
 # 前言
-昨天介紹了 NetworkPolicy 的使用方式，但 kind 預設的 CNI 不支援 NetworkPolicy，所以今天我們將來安裝 [cilium] 作為 CNI，並透過 [hubble]，藉由 [hubble] 的 Service Map 來觀察 NetworkPolicy 的行為。
+昨天介紹了 NetworkPolicy 的使用方式，但 kind 預設的 CNI 不支援 NetworkPolicy，所以今天我們將來安裝 [Cilium] 作為 CNI，並透過 [Hubble] 的 Service Map 來觀察 NetworkPolicy 的行為和網路流量。
 
 # 環境準備
 - 建立/重建 kind 環境，並禁用預設 CNI
-- 安裝 [cilium] 與 [hubble]
+- 安裝 [Cilium] 與 [Hubble]
 - 部署 Demo 服務
-  - frontend Pod
-  - backend Pod
-  - db Pod
+  - Frontend Pod
+  - Backend Pod
+  - DB Pod
 
 ## 建立/重建 kind 環境，並禁用預設 CNI
 調整 kind-config.yml 禁用預設 CNI 
@@ -50,8 +50,8 @@ networking:
 kind create cluster --config=kind-config.yaml  
 ```
 
-## 安裝 [cilium] 與 [hubble]
-依照[官方文件](https://docs.cilium.io/en/stable/installation/kind/#install-cilium)，透過 helm 安裝 [cilium]
+## 安裝 [Cilium] 與 [Hubble]
+依照[官方文件](https://docs.cilium.io/en/stable/installation/kind/#install-cilium)，透過 helm 安裝 [Cilium]
 
 ```shell
 # Setup Helm repository:
@@ -208,17 +208,17 @@ kubectl exec -it ${you frontend pod name} -- curl localhost:80
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240909/截圖-2024-09-09-下午4.56.07.5j45awyrcw.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240909/截圖-2024-09-09-下午4.56.07.5j45awyrcw.webp)
 
 # 小結
-以上就是我們 NetworkPolicy 的實作，並透過 [hubble] 這個使用 [eBPF] 技術的觀測工具，來檢視 Kubernetes 流量傳遞。
+以上就是我們 NetworkPolicy 的實作，並透過基於[eBPF] 技術的觀測工具 [Hubble] 來檢視 Kubernetes 中的網路流量傳遞。
 
 到目前為止，我們更了解 Kubernetes 的核心組件
-明天會開始進入到 實作 CI/CD pipeline 的章節，會將 2023 介紹的陽春版 CI/CD pipeline 透過 kustomize、ArgoCD 實現更好維護的版本。
+明天會開始進入到 CI/CD pipeline 的實作章節，透過 Kustomize 和 ArgoCD 將 2023 年介紹的陽春版 CI/CD pipeline 升級為更易於維護的版本。
 
 # Refernce
 - [cilium 官方](https://cilium.io/)
 - [eBPF 官方](https://ebpf.io/)
 
-[cilium]: https://docs.cilium.io/en/stable/overview/intro/
+[Cilium]: https://docs.cilium.io/en/stable/overview/intro/
 
-[hubble]: https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble
+[Hubble]: https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble
 
 [eBPF]: https://ebpf.io/
