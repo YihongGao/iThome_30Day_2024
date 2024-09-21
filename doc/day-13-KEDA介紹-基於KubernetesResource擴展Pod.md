@@ -2,7 +2,7 @@
 # Day-13 KEDA 介紹 - 基於 Kubernetes Resource 擴展 Pod
 
 # 前言
-前兩天 Demo 了透過 Prometheus、Message Queue 配置自動擴展策略，但有時候我們希望使用更簡單的策略，例如 **依據上游 Pod 的數量來進行擴展**，理論上 上游的 Pod 進行 scale out 時，下游 Pod 可能也會收到更多流量，故若是上游服務的自動擴展已經夠完整時，作為下游的服務有時候能參考上游 Pod 數量來進行擴展。
+前兩天我們介紹了如何透過 Prometheus 和 Message Queue 來配置自動擴展策略。但有時候我們需要使用更簡單的策略，例如 **根據上游 Pod 的數量來進行擴展**。理論上，當上游的 Pod 進行擴展時，下游 Pod 也可能會受到更多流量影響。因此，若上游服務的自動擴展策略已經完善，下游服務可以依據上游 Pod 的數量來同步進行擴展。
 
 # 環境準備
 需要再 Kubernetes 中進行以下準備，來模擬上下游服務
@@ -72,7 +72,7 @@ nginx-7584b6f84c-bmhhv   1/1     Running   0          13m
 redis-644585c74b-8v5rp   1/1     Running   0          13m
 ```
 # 配置 KEDA
-來設定 `ScaledObject` 將 nginx Pod 數量作為擴展依據
+來設定 `ScaledObject` 使 Nginx 的 Pod 數量作為 Redis 擴展的依據。
 
 ## 配置 ScaledObject
 ```yaml
@@ -95,15 +95,15 @@ spec:
       podSelector: 'app=nginx'
       value: '2'
 ```
-能看到這配置檔單純許多，主要欄位為
+配置說明
 - `triggers` 
-  - `type` : 指定為 `kubernetes-workload`，此時 KEDA 透過 kubernetes cluster 的 `kube-apiserver` 監聽 Pod 的數量
-  - `podSelector`: 使用 labelSelector 選擇監聽哪些 Pod。 (可透過 `,` 指定多組條件)
-  - `value`: redis 與 nginx 之間的關係
-    - 計算公式： `relation = (pods which match selector) / (scaled workload pods)`，當 `relation` 超過 `value` 配置值時，會擴展 redis Pod。   
+  - `type`：指定為 `kubernetes-workload`，KEDA 會透過 `kube-apiserver`` 監控 Kubernetes 中 Pod 的數量。
+  - `podSelector`：使用 LabelSelector 來選擇需要監控的 Pod（可使用 `,` 來指定多組條件）。
+  - `value`：定義上游（nginx）與下游（redis）之間的關係。計算公式為：
+    - 計算公式： `relation = (匹配的 Pod 數量) / (被擴展的 Workload Pod 數量)`。  
 
-      故當 nginx Pod scale out 到 3 個時，relation 為 `3`，會擴展 redis 的 Pod。
-      - relation value: `3 = 3(nginx replica number) / 1(redis replica number)`
+    比如，當 Nginx 的 Pod 數量擴展到 3 個時，算出的 relation 為 3 (大於配置的 2)，故會進行 Redis 的 Pod 的擴展。
+      relation 計算範例：`3 = 3(nginx 副本數) / 1(redis 副本數)`。
 
 部署 ScaledObject
 ```shell
@@ -111,11 +111,11 @@ kubectl apply -f keda-scaled-object.yml
 ```
 
 ## 模擬上游擴展 Pod
-透過 `kubectl scale` 來模擬上游服務 (nginx) 承受到更多流量，觸發了 Pod 擴展
+我們可以透過 `kubectl scale` 來模擬上游服務（nginx）因接收到更多流量而觸發 Pod 擴展。
 ```shell
 kubectl scale deployment nginx --replicas 3
 ```
-不久後，就能看到 redis 也從 1 個 Pod 擴展到 2 個
+不久之後，Redis 也會從 1 個 Pod 擴展到 2 個 Pod：
 ```shell
 kubectl get pod
 
@@ -127,7 +127,7 @@ redis-644585c74b-8v5rp   1/1     Running             0          63m
 redis-644585c74b-wc2d4   0/1     ContainerCreating   0          2s
 ```
 
-若 nginx 擴展到 5 個時，redis 也會擴展到 3個 Pod
+當 nginx 擴展到 5 個 Pod 時，Redis 也會相應擴展到 3 個 Pod：
 
 ```shell
 kubectl scale deployment nginx --replicas 5
@@ -145,13 +145,13 @@ redis-644585c74b-ct294   0/1     ContainerCreating   0          2s
 redis-644585c74b-wc2d4   1/1     Running             0          107s
 ```
 
-再來我們觀察是否會依據 nginx 縮容，一並減少 redis Pod
+接著，我們模擬 nginx 的縮容，來觀察 Redis Pod 是否會同步縮減：
 
 ```shell
 kubectl scale deployment nginx --replicas 2
 ```
 
-這時因為大於 1 個 Pod 時的擴展機制其實是由 [HPA] 處理的，HPA 為了避免頻繁擴縮容，故會參考 5 分鐘以內的評估資料，故需要等 5 分鐘後才會減少 redis Pod
+由於大於 1 個 Pod 的擴縮容是由 [HPA] 處理的，為了避免頻繁變動，HPA 會參考過去 5 分鐘內的評估資料。因此，Redis Pod 的縮減可能會在 5 分鐘後才發生。
 ```shell
 kubectl get pod
 
@@ -160,12 +160,12 @@ nginx-7584b6f84c-5bqlm   1/1     Running   0          73m
 nginx-7584b6f84c-bmhhv   1/1     Running   0          79m
 redis-644585c74b-8v5rp   1/1     Running   0          79m
 ```
-> 📘 `ScaledObject` 能透過 advanced block 調整 [HPA] 的行為，能參考 [KEDA 官方文件](https://keda.sh/docs/2.15/reference/scaledobject-spec/#overview)
+> 📘 `ScaledObject`可以透過 advanced block 來調整 [HPA] 的行為，詳細內容可參閱 [KEDA 官方文件](https://keda.sh/docs/2.15/reference/scaledobject-spec/#overview)
 
 # 小結
-這三天我們透過 [KEDA] 來實現更多元的方式來配置自動擴展策略，不再受 [HPA] 預設只能依據 CPU / Memory，讓我們能依照服務特性來提高服務可用性。
+這三天我們透過 [KEDA] 實現了多種自動擴展策略，可以依據不同服務的需求，例如根據外部指標或上游服務的負載來調整 Pod 數量，提升系統的資源利用效率與服務穩定性。
 
-明天會繼續介紹 Kubernetes 原生用來管理網路流量的 Resource: `NetworkPolicy`
+明天我們將開始探討 Kubernetes 中管理網路流量的核心資源：`NetworkPolicy`，了解其如何有效控制 Pod 之間及外部流量的訪問。
 
 # Refernce
 - [KEDA]
