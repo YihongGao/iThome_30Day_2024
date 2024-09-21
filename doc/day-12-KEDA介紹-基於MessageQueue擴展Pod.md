@@ -2,15 +2,15 @@
 # Day-12 KEDA 介紹 - 基於 Message Queue 自動擴展 Pod
 
 # 前言
-昨天介紹了如何依據 Prometheus 中的 metrics 來自動擴展 Pod，今天藉由 GCP 的 Message Queue 服務: `Pub/Sub`，並且讓 Queue 沒有 message 要處理時，能把 Pod 降至 0 個節省運算資源。
+昨天我們介紹了如何根據 Prometheus 中的 metrics 來自動擴展 Pod。今天，我們將使用 GCP 的訊息佇列服務 **Pub/Sub**，並實現當佇列中沒有訊息需要處理時，將 Pod 縮減至 0，以節省運算資源。
 
 # 環境準備
-需要再 Kubernetes 中進行以下準備
-- 配置 GCP Pub/Sub topic & subscription
-- 配置 GCP Service Account 與 產生 gcp-service-account-credential.json
-- 將 gcp-service-account-credential.json 透過 Kubernetes secrets 儲存到 Kubernetes cluster 內
-- 部署 workload
+在 Kubernetes 中需要進行以下準備工作：
 
+1. 配置 GCP Pub/Sub 的 Topic 和 Subscription。
+1. 配置 GCP Service Account 並產生 `gcp-service-account-credential.json` 憑證文件。
+1. 將 `gcp-service-account-credential.json` 透過 Kubernetes Secrets 儲存至 Cluster。
+1. 部署相關 Workload。
 
 ## 配置 GCP Pub/Sub topic & subscription
 透過 UI 或 `gcloud` command line tool 進行配置
@@ -169,7 +169,7 @@ kubectl logs -f $YOU_POD_NAME
 # 配置 KEDA
 
 ## 配置 TriggerAuthentication
-為了讓 KEDA 能順利與 GCP 溝通，需要配置 `TriggerAuthentication`，讓 KEDA 知道用什麼方式攜帶憑證給 GCP 進行認證與授權檢查。
+為了讓 KEDA 能與 GCP 正常連線，我們需要配置 **TriggerAuthentication**，使 KEDA 知道如何攜帶憑證來進行認證與授權檢查。
 
 ```yaml
 # keda-scaled-auth.yml
@@ -183,13 +183,13 @@ spec:
     name: pubsub-secret
     key: gcp-service-account-credential.json
 ```
-重點欄位如下
-- `secretTargetRef`: 從 secrets 取得憑證
-    - `parameter`: 憑證類型，`GoogleApplicationCredentials` 代表 GCP service account 的 json key.
-    - `name`: 從哪個 secrets 找憑證
-    - `key`: 憑證儲存於 secrets 中哪個欄位
+重點欄位解釋：
+- `secretTargetRef`：從 Secrets 取得憑證
+    - `parameter`：憑證類型，`GoogleApplicationCredentials` 代表 GCP Service Account 的 json 憑證.
+    - `name`：指定從哪個 Secrets 中取得憑證。
+    - `key`：Secrets  中存放憑證的欄位名稱。
 
-稍後 `ScaledObject` 會使用到此物件
+稍後，我們將在 ScaledObject 配置中使用到這個 **TriggerAuthentication** 物件。
 
 ```shell
 kubectl apply -f keda-scaled-auth.yml
@@ -226,17 +226,17 @@ spec:
       activationValue: "5"
       subscriptionNameFromEnv: PUBSUB_ITHOME2024_DAY11_SUBSCRIPTION
 ```
-能發現添加了不少欄位，先從 `triggers` 開始說明
-- `type`: 改為 gcp-pubsub，代表監聽的目標改為 GCP Pub/Sub 服務
-    - `authenticationRef.name`: 使用上一步建立的 `TriggerAuthentication` 做為向 GCP 溝通的憑證
-    - `mode`, `value`: 這兩個屬性一起看得意思就是，當 Pub/Sub subscription 累積超過 10 筆 message 待處理時，會 scale out Pod。
-    - `idleReplicaCount`, `activationValue`: 這兩個屬性一起看得意思就是，當 subscription 中低於 5 筆 message 待處理時，會轉為 `Inactive` 狀態，將 Pod 數量轉為 **0**，反之會進入 `Active` 狀態，並由 HPA 接手保證 Pod 數量介於 `minReplicaCount` 與 `maxReplicaCount` 之間。
-        > 關於 `Active` 與 `Inactive` 狀態，更多資訊，能參閱此[官方文件](https://keda.sh/docs/2.15/concepts/scaling-deployments/#activating-and-scaling-thresholds)
-    - `cooldownPeriod`: subscription 中低於 5 筆 message 的狀況超國 60 秒才進入 `Inactive` 狀態
+可以看到新增了許多欄位，首先從 `triggers` 開始說明：
+- `type`: 設置為 `gcp-pubsub`，代表監聽目標為 GCP Pub/Sub 服務
+    - `authenticationRef.name`: 使用上一步建立的 `TriggerAuthentication` 做為與 GCP 溝通的憑證
+    - `mode`, `value`: 這這兩個屬性組合表示，當 Pub/Sub 訂閱中的未處理訊息數超過 10 筆時，KEDA 將觸發擴展操作，增加 Pod 副本數。
+    - `idleReplicaCount`, `activationValue`: 這兩個屬性組合表示，當未處理訊息數低於 5 筆時，系統將進入 `Inactive` 狀態，並將 Pod 副本數縮減為 0。反之，進入 `Active` 狀態後，HPA 會接手擴容，並確保 Pod 副本數介於 `minReplicaCount` 和 `maxReplicaCount` 之間。
+        > 有關 `Active` 與 `Inactive` 狀態，更多資訊，能參閱此[官方文件](https://keda.sh/docs/2.15/concepts/scaling-deployments/#activating-and-scaling-thresholds)
+    - `cooldownPeriod`: 當未處理訊息數持續低於 5 筆超過 60 秒後，才會進入 `Inactive` 狀態。
 
-其他欄位上一篇介紹過就不重複說明，更詳細的介紹能參閱[官方文件](https://keda.sh/docs/2.15/reference/scaledobject-spec/) 
+其他欄位在之前的介紹中已有說明，不再重複。更詳細的介紹請參閱 [官方文件](https://keda.sh/docs/2.15/reference/scaledobject-spec/) 
 
-簡單來說，這個 ScaledObject 使用 GCP monitoring 的 metrics，來檢查 Pub/Sub subscription queue 長度作為擴縮容依據，當 queue 長度低於 5 時，持續超過 60s 時，將 Pod 歸 0 節省資源，當 queue 長度超過 5 時，啟動 Pod 來消化 message，若 queue 長度超過則擴展更多 Pod 協同處理 message。
+這個 ScaledObject 利用 GCP 的監控指標來檢查 Pub/Sub 訂閱的佇列長度，當佇列長度持續低於 5 筆超過 60 秒時，將 Pod 副本數縮減為 0，以節省資源；當佇列長度超過 5 筆時，則啟動 Pod 處理訊息。若佇列長度超過設定的值，系統會擴展更多的 Pod 來協同處理訊息。
 
 配置 ScaledObject
 ```shell
@@ -291,9 +291,9 @@ kubectl delete scaledobjects.keda.sh keda-pubsub-demo
 ```
 
 # 小結
-今天我們使用了 KEDA 依據 Message Queue 的長度來作為 autoscaling 的策略依據，在 message consumer 特別消耗資源 且 message 頻率很不固定的案例中，能使用此方式避免大量資源被長時間佔用與浪費。
+今天我們介紹了如何使用 KEDA 根據 Message Queue 的長度來進行自動擴/縮容。當 message consumer 資源消耗大且訊息頻率不穩定的情況下，這種策略能有效避免資源長時間被佔用和浪費。
 
-明天會介紹本系列最後一個 KEDA 使用案例，若對更多使用案例有興趣也能參閱 [官方文件/scalers](https://keda.sh/docs/2.15/scalers/)
+明天會介紹本系列最後一個 KEDA 使用案例，若對更多使用案例有興趣，能參閱 [官方文件/scalers](https://keda.sh/docs/2.15/scalers/) 中許多能作為事件來源的選擇。
 
 # Refernce
 - [KEDA]
