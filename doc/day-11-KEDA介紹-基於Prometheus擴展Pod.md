@@ -2,7 +2,7 @@
 # Day-11 KEDA 介紹 - 基於 Prometheus 自動擴展 Pod
 
 # 前言
-昨天已經將 KEDA 安裝到 Kubernetes 中，今天會透過 KEDA 使用 Prometheus 中的 metrics 作為依據，來配置自動擴展策略。
+昨天已經將 KEDA 安裝到 Kubernetes 中，今天會來安裝 Prometheus，並使用 KEDA 依據 Prometheus 中的 metrics 配置自動擴展策略。
 
 # 環境準備
 需要再 Kubernetes 中進行以下準備
@@ -191,25 +191,24 @@ spec:
   maxReplicaCount: 6
   fallback:
     failureThreshold: 2
-    replicas: 6
-
-  
+    replicas: 6 
 ```
-ScaledObject 是 KEDA 提供的 CRD，用來配置 workload 的擴展策略與事件來源，先介紹幾個重要欄位
-- `triggers` : 用來定義事件來源的區塊，此例使用的事件來源是 `prometheus`，所以會搭配以下設定
-    - `serverAddress`: prometheus 的 URL，供 KEDA 獲取 metrics
-    - `query`: 對 prometheus 使用的查詢語法，依此例就是利用 http_server_requests_seconds_count 計算 API QPS
-    - `threshold`: 依據 `query` 查詢的值，依據此閥值進行擴/縮容操作
 
-- `scaleTargetRef` : 定義 ScaledObject 要操作哪個 workload 的擴/縮容
+**ScaledObject** 是 KEDA 提供的 CRD，用來定義 workload 的擴展策略與事件來源，以下介紹幾個重要的欄位：
+- `triggers`：定義事件來源的區塊，以下以 `prometheus`` 為例：
+    - `serverAddress`：Prometheus 的 URL，KEDA 會透過此地址獲取 metrics。
+    - `query`：Prometheus 查詢語法，這裡使用 `http_server_requests_seconds_count` 來計算 API QPS。
+    - `threshold`：KEDA 根據 query 返回的值，超過此閥值時觸發擴/縮容操作。
 
-- `minReplicaCount / maxReplicaCount` : 最多與最少的 Pod 數量，同 HPA
+- `scaleTargetRef` ：定義要操作擴/縮容的 Kubernetes Workload，例如 Deployment。
 
-- `fallback`: 當 `triggers` 不可用時，應該如何處理
-    - `failureThreshold`: 當從 `triggers` 獲取資料失敗超過此閥值時，啟用 `fallback` 配置
-    - `replicas`: 定義 `triggers` 不可用時，應有多少 pod 副本
+- `minReplicaCount / maxReplicaCount` ：定義 Pod 副本的最小與最大數量，與 HPA 的設定類似。
 
-簡單來說，這個 ScaledObject 使用 prometheus 作為擴縮容依據，當 qps 超過 10 時，對名稱為 `keda-demo` 的 Deployment 進行擴容，反之縮容，最少有 2 個 pod、最多可以有 6 個 Pod。若 prometheus 不可用時，固定為 6 個 Pod。
+- `fallback`：當 triggers 無法使用時的應對方案：
+    - `failureThreshold`：當 `trigger` 無法正常工作且超過此失敗次數時，啟用 `fallback`
+    - `replicas`：當 `trigger` 無法使用時，固定的 Pod 副本數量。
+
+在這個範例中，`ScaledObject` 使用 Prometheus 來決定擴/縮容條件。當 API QPS 超過 10 時，KEDA 會對名為 `keda-demo` 的 Deployment 進行擴容操作；當 QPS 低於閥值時，則進行縮容。Pod 副本數量最少為 2 個，最多可達 6 個。如果 Prometheus 無法使用，KEDA 會將 Pod 副本數固定為 6 個。
 
 我們來部署 ScaledObject 並對 Deployment 給予一些 http 請求使其擴容
 ```shell
@@ -233,9 +232,9 @@ keda-demo-55544b4fbb-ncpbg   1/1     Running   0          4m51s   10.244.2.48   
 ```
 
 # 小結
-今天我們透過 KEDA 使用 prometheus 作為 autoscaling 的策略依據，不再只能使用 CPU, memory 為策略依據，讓我們有更多靈活運用的空間，比如 Response time 也可能當作擴縮容依據。
+今天我們透過 KEDA 使用 prometheus 作為 自動擴/縮容的策略依據，突破了只能依賴 CPU 和記憶體的限制，提供了更多靈活運用的空間。例如，我們可以根據 API 的 Response time 等 metrics 進行擴/縮容，進一步提升資源管理的靈活性。
 
-明天會繼續用 KEDA 進行更多使用案例介紹。
+明天我們將繼續介紹更多 KEDA 的應用案例。
 
 # Refernce
 - [KEDA]
