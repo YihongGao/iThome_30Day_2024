@@ -189,6 +189,6 @@ spec:
 明天會介紹 Kustomize 的另一個功能：`Components`，這個用來跨 Overlays 的 Patch 功能。
 
 # Refernce
-- [Kustomize 官方文件](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#name-and-kind-changes)
+- [Kustomize 官方文件 / patchs](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#name-and-kind-changes)
 - [christopher-adamson / Patches in Kustomize](https://www.linkedin.com/pulse/patches-kustomize-christopher-adamson-gaq4c)
 - [openanalytics / kustomize-best-practices](https://www.openanalytics.eu/blog/2021/02/23/kustomize-best-practices/)
