@@ -120,7 +120,7 @@ appproject.argoproj.io/default   2d7h
 使用時能透過 UI 編輯 或 操作 CRD 來調整配置，甚至將 ArgoCD CRD 也納入 ArgoCD Application 管理的資源，讓 ArgoCD manifest 的異動也能透過 GitOps 進行管理與追蹤。
 
 # 小結
-今天介紹了 ArgoCD 的架構 與 CRD，明天會分享筆者管理 ArgoCD 的一些方式與心得，讓管理 ArgoCD 更輕鬆。
+今天介紹了 ArgoCD 的架構 與 CRD，明天會介紹其他 ArgoCD 的進階/管理功能應用。
 
 # Refernce
 - [ArgoCD 官方文件](https://argo-cd.readthedocs.io/en/stable/)
