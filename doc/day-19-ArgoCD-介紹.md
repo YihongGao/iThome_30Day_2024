@@ -137,7 +137,7 @@ kubectl create namespace ithome
 
   我們來看一下 Kubernetes 是否如 App Status 一樣運作順利。
   
-  ```yaml
+  ```shell
   kubectl get pod
 
   # output

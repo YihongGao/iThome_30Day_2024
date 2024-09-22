@@ -10,6 +10,8 @@
 - 部署 redis 模擬下游服務，並有 1 個 Pod 副本
 
 ## 部署 nginx 模擬上游服務，並有 2 個 Pod 副本
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day13)
+
 ```yaml
 # nginx.yml
 apiVersion: apps/v1

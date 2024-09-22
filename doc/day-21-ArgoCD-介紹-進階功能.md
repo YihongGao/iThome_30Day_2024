@@ -7,7 +7,6 @@
 2. Sync Windows
 3. Alert & Notification
 
-
 # Sync Waves
 大部分的時候，我們的系統都是由多個服務組成的，而服務之間時常有依賴關係 (如 API 依賴)，所以我們會希望能控制每個服務的部署順序，來保證 API 的邏輯都符合預期。
 ### 假設服務依賴性如下
@@ -65,6 +64,8 @@ metadata:
 3. 最後當 `product-backend` 部署成功時，才觸發 `app-backend` 部署
 
 透過 **Sync Waves** 讓我們能靈活的且安全的使用 ArgoCD，確保相依的資源已正確部署，避免在依賴未準備好時就啟動應用，從而減少應用失敗的風險。
+
+> 範例 YAML 能參閱[GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day21/argoCD-demo)
 
 ## Sync Windows
 **Sync Windows** 是一種用來控制何時允許或禁止資源同步的功能，適合用於在特定時間範圍內進行自動化資源同步或阻止同步操作。當你希望在業務高峰期避免更新，或為了合規需求，僅允許在特定時段內進行應用部署時。

@@ -13,6 +13,8 @@
   - DB Pod
 
 ## 建立/重建 kind 環境，並禁用預設 CNI
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day15)
+
 調整 kind-config.yml 禁用預設 CNI 
 ```yaml
 apiVersion: kind.x-k8s.io/v1alpha4

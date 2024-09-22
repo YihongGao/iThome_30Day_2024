@@ -98,6 +98,9 @@ spec:
   - ****egress**** ：不允許任何出站流量，以保護數據安全。
 
 讓我們來一步一步進行配置
+
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day14)
+
 1. Default NetworkPolicy
     ```yaml
     apiVersion: networking.k8s.io/v1

@@ -51,6 +51,7 @@ Overlay 是在 base 基礎上進行的客製化修改，根據不同環境需求
 - **product-backend**：一個 Spring boot application，提供 API 給 `app-backend` 調用
 
 將這兩個 Deployment 套上經典的 Kustomize 結構，完整檔案內容能參閱此 [Github Repo](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day16/kustomize-demo)
+
 ```shell
 kustomize-demo/
 ├── bases/ # Base（基礎配置）

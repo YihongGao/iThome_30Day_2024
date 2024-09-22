@@ -15,6 +15,9 @@ Kustomize 支援兩種不同類型的 Patch 方式，
 - Strategic Merge Patch：基於 Kubernetes 的 [Strategic Merge Patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md)
 
 直接看昨天使用的範例
+
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day17/kustomize-demo)
+
 ## JSON6902 Patch
 ```yaml
 # kustomization.yaml

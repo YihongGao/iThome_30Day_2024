@@ -14,11 +14,15 @@
 這時將 安全限制 與 Rolling 策略的配置，透過 Componentes 進行模組化，就於指定的環境使用該配置，不需要重複撰寫。
 
 ## 使用範例
+
 用 Rolling 策略 作為使用範例，我們模組化出兩種 Rolling 策略
 - asap-rolling-strategy：盡快完成 Rolling，允許服務中斷
 - safe-rolling-strategy：不允許服務中斷，新版本的 Pod 需 Ready 才關閉舊 Pod
 
 ### 準備 Components
+
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day18/kustomize-demo)
+
 #### asap-rolling-strategy component YAML
 ```yaml
 # kustomize-demo/components/asap-rolling-strategy/api-rollingUpdate-strategy.yml

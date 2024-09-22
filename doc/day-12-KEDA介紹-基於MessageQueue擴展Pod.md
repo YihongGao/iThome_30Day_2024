@@ -70,6 +70,8 @@ pubsub-secret   Opaque   1      110m
 ```
 
 ## 部署 workload
+> 代碼能參閱 [GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day12)
+
 我們部署一個 listen GCP Pub/Sub 的 spring boot Application
 ```yaml
 # keda-pubsub-demo.yml
