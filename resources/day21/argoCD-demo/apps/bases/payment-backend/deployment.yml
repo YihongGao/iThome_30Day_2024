@@ -4,6 +4,8 @@ metadata:
   labels:
     app: payment-backend
   name: payment-backend
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   selector:
     matchLabels:

@@ -4,6 +4,8 @@ metadata:
   labels:
     app: product-backend
   name: product-backend
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   selector:
     matchLabels:
