@@ -173,6 +173,3 @@ data:
 
 # Refernce
 - [ArgoCD 官方文件](https://argo-cd.readthedocs.io/en/stable/)
-
-
-[官方安裝文件]: https://argo-cd.readthedocs.io/en/stable/operator-manual/installation/#kustomize
