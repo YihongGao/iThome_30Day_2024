@@ -42,7 +42,7 @@ spec:
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /actuator/health/readinessx
+            path: /actuator/health/readiness
             port: 8080
           failureThreshold: 3
           periodSeconds: 10
