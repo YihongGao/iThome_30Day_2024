@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app-backend
+  name: app-backend
+spec:
+  selector:
+    matchLabels:
+      app: app-backend
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: app-backend
+    spec:
+      containers:
+      - image: luciferstut/app-backend-for-ithome2024:none
+        name: apps
+        ports:
+        - containerPort: 8080
+        resources: 
+          requests:
+            cpu: "300m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "768Mi"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          failureThreshold: 6
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          failureThreshold: 3
+          periodSeconds: 10
+        envFrom: # 將 ConfigMap 注入此容器
+          - configMapRef:
+              name: demo-config # 注入的 ConfigMap 名稱

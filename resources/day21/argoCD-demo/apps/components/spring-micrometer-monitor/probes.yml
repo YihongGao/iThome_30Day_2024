@@ -1,0 +1,24 @@
+- op: replace
+  path: /spec/template/spec/containers/0/startupProbe
+  value: 
+    failureThreshold: 30
+    periodSeconds: 10
+    httpGet:
+      path: /q/health/liveness
+      port: 9000
+- op: replace
+  path: /spec/template/spec/containers/0/livenessProbe
+  value: 
+    initialDelaySeconds: 30
+    failureThreshold: 3
+    periodSeconds: 20
+    httpGet:
+      path: /q/health/liveness
+      port: 9000
+- op: replace
+  path: /spec/template/spec/containers/0/readinessProbe
+  value: 
+    periodSeconds: 5
+    httpGet:
+      path: /q/health/readiness
+      port: 9000
