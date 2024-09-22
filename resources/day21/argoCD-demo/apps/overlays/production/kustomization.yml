@@ -12,9 +12,9 @@ resources:
 
 images:
 - name: luciferstut/app-backend-for-ithome2024:none
-  newTag: "latest"
+  newTag: "1.0"
 - name: luciferstut/product-backend-for-ithome2024:none
-  newTag: "latest"
+  newTag: "1.0"
 
 components:
   - ../../components/safe-rolling-strategy
