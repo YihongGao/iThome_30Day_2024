@@ -1,0 +1,226 @@
+apiVersion: v1
+data:
+  APP.ENV: kind
+  APP.WELCOME.MESSAGE: Hello, ConfigMap from `Product` enviorment.
+  PRODUCT_HOST: http://product-backend.ithome.svc.cluster.local:80
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: demo-config
+  namespace: ithome
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: app-backend
+  name: app-backend
+  namespace: ithome
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: app-backend
+    version: stable
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: app-backend
+  name: app-backend-canary
+  namespace: ithome
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: app-backend
+    version: canary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app: app-backend
+  name: app-backend
+  namespace: ithome
+spec:
+  selector:
+    matchLabels:
+      app: app-backend
+      version: stable
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: app-backend
+        version: stable
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: demo-config
+        image: luciferstut/app-backend-for-ithome2024:1.0
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+        name: apps
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 768Mi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app: app-backend
+  name: app-backend-canary
+  namespace: ithome
+spec:
+  selector:
+    matchLabels:
+      app: app-backend
+      version: canary
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: app-backend
+        version: canary
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: demo-config
+        image: luciferstut/app-backend-for-ithome2024:day-21-canary
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+        name: apps
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 768Mi
+          requests:
+            cpu: 300m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-backend
+  namespace: ithome
+spec:
+  maxReplicas: 4
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-backend
+  targetCPUUtilizationPercentage: 150
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-backend-canary
+  namespace: ithome
+spec:
+  maxReplicas: 4
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-backend-canary
+  targetCPUUtilizationPercentage: 150
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: Canary
+    nginx.ingress.kubernetes.io/canary-by-header-value: "true"
+  name: canary-ingress
+  namespace: ithome
+spec:
+  rules:
+  - host: day24.ithome.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: app-backend-canary
+            port:
+              number: 80
+        pathType: ImplementationSpecific
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stable-ingress
+  namespace: ithome
+spec:
+  rules:
+  - host: day24.ithome.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: app-backend
+            port:
+              number: 80
+        pathType: ImplementationSpecific
