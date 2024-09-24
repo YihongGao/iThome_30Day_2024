@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+nameSuffix: "-canary"
+
+resources: 
+- ../../../bases/app-backend
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: "day-21-canary"
+
+patches:
+- path: patchs/app-backend-canary-deployment-selector.yml
+- path: patchs/app-backend-canary-service-selector.yml

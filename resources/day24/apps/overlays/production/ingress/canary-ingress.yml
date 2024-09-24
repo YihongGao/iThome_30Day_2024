@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "Canary"       # 基於 Canary Header
+    nginx.ingress.kubernetes.io/canary-by-header-value: "true"   # Canary Header 的值必須是 true 才導流
+spec:
+  rules:
+    - host: day24.ithome.com
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: app-backend-canary
+                port:
+                  number: 80

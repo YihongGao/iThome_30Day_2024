@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-backend
+spec:
+  selector:
+    matchLabels:
+      version: canary  # 新增的 label 到 selector.matchLabels
+  template:
+    metadata:
+      labels:
+        version: canary  # 新增的 label 到 Pod template 的 metadata.labels
