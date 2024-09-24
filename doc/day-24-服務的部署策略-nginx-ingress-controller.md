@@ -77,6 +77,8 @@ stable-ingress   <none>   day24.ithome.com   localhost   80      29m
 - `stable-ingress`：將流量導向 stable 版本的服務
 - `canary-ingress`：將流量導向 canary 版本的服務
 
+兩個都會監聽 `http://day24.ithome.com:30000` 的請求，會依照流量控制將流量轉發到不同版本的服務
+
 # 透過 Ingress 控制流量
 來看一下這兩個 Ingress 的配置哪裡不同。
 
@@ -129,6 +131,23 @@ spec:
 ## 藍綠部署（Blue/Green）
 透過這些 Annotation 控制流量，就能在新版本對外發佈之前，使用指定 Header 的方式，進行新版本的功能性驗證，在對外發佈新版本，來實現 **藍綠部署（Blue/Green）**。
 
+使用 curl 調用服務
+```shell 
+# call stable version
+curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1
+# Output
+Hello, ConfigMap from `Product` enviorment.
+```
+
+當加上指定 Header 後，流量會導向新版本服務
+```shell 
+# call canary version
+curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1 -H "Canary: true"
+
+# Output
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+```
+
 新版本發佈方式只要更改 stable-ingress 的 `spec.rules[0].http.paths[0].backend.service` 到新版本的 Service，後續 Nginx Ingress Controller 會將全部流量到新版本。
 
 ## 金絲雀部署（Canary）
@@ -136,9 +155,26 @@ spec:
 ```shell
 `kubectl annotate ingress canary-ingress nginx.ingress.kubernetes.io/canary-weight="50"`
 ```
-- `nginx.ingress.kubernetes.io/canary-weight`：幾％的流量請求會被導向 Canary 版本。
+- `nginx.ingress.kubernetes.io/canary-weight`：指定幾％的流量請求會被導向 Canary 版本。
 
-透過百分比流量控制的方式，就能實現 **金絲雀部署（Canary）**
+curl 不指定 Header，約有一半的流量會導向新版本
+```shell
+# 連打 10 次 curl
+for i in {1..10}; do curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1; echo ""; done
+# Output
+Hello, ConfigMap from `Product` enviorment.
+Hello, ConfigMap from `Product` enviorment.
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+Hello, ConfigMap from `Product` enviorment.
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+Hello, ConfigMap from `Product` enviorment.
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+Hello, ConfigMap from `Product` enviorment.(Canary version)
+Hello, ConfigMap from `Product` enviorment.
+```
+
+透過百分比流量控制的方式，依據新版本的運作是否正確，緩慢提高 `nginx.ingress.kubernetes.io/canary-weight` 的值，就能實現 **金絲雀部署（Canary）**，降低新版本故障的爆炸範圍。
 
 # 小結
 今天演練了如何使用 Ingress NGINX Controller 實現 Kubernetes 中的兩種部署策略：藍綠部署（Blue/Green） 和 金絲雀部署（Canary）。
