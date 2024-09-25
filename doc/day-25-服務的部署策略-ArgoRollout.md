@@ -2,17 +2,18 @@
 # Day-25 服務的部署策略 - Argo Rollouts
 
 # 前言
-昨天透過 Ingress NGINX controller 實作了
+昨天使用 Ingress NGINX Controller 實作了以下部署策略：
   - 藍綠部署（Blue/Green）
   - 金絲雀部署（Canary）
 
-但其中控制流量的手續繁瑣，而且每次需要多部署一份新版本的 Deployment、Service 再管理上十分不方便。
+但在操作中，控制流量的過程相當繁瑣。每次發佈新版本都需要額外部署新的 Deployment 和 Service，這在管理上變得不便。
 
-今天來介紹 CNCF 中專注在部署策略解決方案的專案：**Argo Rollouts**
+今天要介紹 CNCF 專注於部署策略的解決方案：**Argo Rollouts**。
 
 # Argo Rollouts
 ![https://miro.medium.com/v2/resize:fit:1400/1*rZ_Yfz9XNk8dDqf4s8kDhQ.jpeg](https://miro.medium.com/v2/resize:fit:1400/1*rZ_Yfz9XNk8dDqf4s8kDhQ.jpeg)
-Argo Rollouts 是一個漸進式部署（Progressive Delivery）到 Kubernetes 的解決方案，透過 Argo Rollouts 提供的 CustomResourceDefinition (CRD) 能輕鬆的使用 **金絲雀部署（Canary）**、**藍綠部署（Blue/Green)** 來發布 Kubernetes 的 workload。
+
+**Argo Rollouts** 是一個針對 Kubernetes 的漸進式部署（Progressive Delivery）解決方案。它提供了CustomResourceDefinition（CRD），使我們能夠輕鬆實現 **金絲雀部署（Canary）** 和 **藍綠部署（Blue/Green）** 等進階的發布策略，優雅地管理 Kubernetes workload。
 
 # Argo Rollouts 架構
 ![https://argo-rollouts.readthedocs.io/en/stable/architecture-assets/argo-rollout-architecture.png](https://argo-rollouts.readthedocs.io/en/stable/architecture-assets/argo-rollout-architecture.png)
@@ -26,7 +27,7 @@ Argo Rollouts 是一個漸進式部署（Progressive Delivery）到 Kubernetes �
 
 - **Traffic Management**：處理流量控制的組件，可選擇許多不同的組件來實現流量管理，提供 Argo Rollouts 精準控制流量到新舊版本 Pod 的能力
 
-直接來安裝並體驗看看使用上是什麼感覺
+現在就來安裝 Argo Rollouts 並實 際體驗看看他的能力
 
 # 環境準備
 1. 安裝 Ingress NGINX Controller 到本地 kind 環境
@@ -103,7 +104,7 @@ kubectl apply -f https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/r
 ```
 
 部署後會有下資源
-- `rollouts.argoproj.io/app-backend`：代表我們運行的服務
+- `rollouts.argoproj.io/app-backend`：代表我們正在運行的服務。
 ```shell
 kubectl  get rollouts.argoproj.io,pod -o wide
 
@@ -114,7 +115,7 @@ rollout.argoproj.io/app-backend   1         1         1            1           1
 NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
 pod/app-backend-6c8c946c5-6dlvx   1/1     Running   0          17m   10.244.0.41   kind-control-plane   <none>           <none>
 ```
-檢視 Rollout 的 [YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/deployment.yml) 能看到大部分的屬性都跟 Deployment 很相似，他們的確也都具有相同的功能性，主要的差異再 `strategy`，定義了藍綠部署的配置
+檢視 [Rollout 的 YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/deployment.yml) 大部分屬性與 Deployment 類似，因為兩者具有相同的核心功能。最大的差異在於 strategy，用來定義藍綠部署的配置：
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -138,15 +139,15 @@ spec:
       autoPromotionEnabled: false
 ```
 依此為例
-- `strategy`：部署策略的定義
-  - `blueGreen`：使用藍綠部署
-      - `activeService`：穩定版本的 Pod 要透過哪個 Kubernetes Service 當流量入口
-      - `previewService`：新版本的 Pod 要透過哪個 Kubernetes Service 當流量入口
-      - `autoPromotionEnabled`：當新版本的 Pod Ready 時，是否要自動執行流量切換，並取代及關閉穩定版本的 Pod
+- `strategy`：定義部署策略。
+  - `blueGreen`：使用藍綠部署模式
+      - `activeService`：用於穩定版本的 Pod，作為流量入口的 Kubernetes Service。
+      - `previewService`：用於新版本的 Pod，作為流量入口的 Kubernetes Service。
+      - `autoPromotionEnabled`：控制當新版本的 Pod 準備就緒時，是否自動切換流量，並關閉舊版本的 Pod。
 
-當這個 Rollout 版本更新時，會同時運行新舊版本的 Pod，並且能透過 `activeService`、`previewService` 定義的 Service 向指定版本的 Pod 傳遞流量。
+在 Rollout 更新時，會同時運行新舊版本的 Pod，並透過 `activeService` 和 `previewService` 將流量導向相應的版本。
 
-- `service/app-backend-stable`、`app-backend-preview`：分別用來作為服務新舊版本的流量入口。能發現目前都是導向同一個 Pod，當新版本出現時，會 `app-backend-preview` 會自動調整流量轉發到新版本 Pod 而不是當前版本。
+- `service/app-backend-stable`、`app-backend-preview`：分別作為舊版和新版服務的流量入口。初始狀態下，兩者都指向同一個 Pod，但在新版本出現時，`app-backend-preview` 會自動將流量轉向新版本 Pod。
 ```shell
 kubectl get svc,ep
 
@@ -188,11 +189,11 @@ Hello, welcome to use the container.
 
 # 驗證 藍綠部署（Blue/Green）的行為
 1. 模擬服務更新    
-  更新 Rollout 使用的 Image Tag，使用 `kubectl edit` 編輯 `rollouts.argoproj.io/app-backend`
+  使用 `kubectl edit` 更新 Rollout 資源的 Image Tag。
     ``` shell
     kubectl edit rollouts.argoproj.io/app-backend
     ```
-    更新 spec.template.spec.containers[0].image 的值為 `luciferstut/app-backend-for-ithome2024:day-21-canary`
+    在編輯視窗中，將 spec.template.spec.containers[0].image 更新為：
     ```yaml
     spec:
       template:
@@ -200,9 +201,9 @@ Hello, welcome to use the container.
           containers:
           - image: luciferstut/app-backend-for-ithome2024:day-21-canary
     ```
-2. 觀察 Pod, Service 有什麼改變    
+2. 觀察 Pod, Service 的變化   
   **Pod**    
-  能看到出現了一個使用新版本 Image 的 Pod，並且舊版本的 Pod 仍在運作。
+  能看到新版本的 Pod 啟動，舊版本的 Pod 依然運行：
     ```shell
     kubectl get pod --show-labels -o wide
 
@@ -211,27 +212,28 @@ Hello, welcome to use the container.
     app-backend-5cccbf7f97-nzsm9   1/1     Running   0          18m   10.244.0.42   kind-control-plane   <none>           <none>            app=app-backend,rollouts-pod-template-hash=5cccbf7f97
     app-backend-6c8c946c5-6dlvx    1/1     Running   0          66m   10.244.0.41   kind-control-plane   <none>           <none>            app=app-backend,rollouts-pod-template-hash=6c8c946c5
     ```
-    不同版本的 Pod 分別有不同的 `rollouts-pod-template-hash` Label value。
+    不同版本的 Pod 具有不同的 `rollouts-pod-template-hash` Label value。
+    
+    **Service**    
+    stable 和 preview 兩個 Service 根據 `rollouts-pod-template-hash` 將流量導向對應的 Pod：
+    ```shell
+    kubectl get svc,ep -o wide
 
-  **Service**    
-  這時能看到 stable 與 preview 的 Service 分別透過 Label Selector 與 `rollouts-pod-template-hash` 流量分配到對應版本的 Pod
-  ```shell
-  kubectl get svc,ep -o wide
+    # Output
+    NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
+    service/app-backend-preview   ClusterIP   10.96.132.143   <none>        80/TCP    65m   app=app-backend,rollouts-pod-template-hash=5cccbf7f97
+    service/app-backend-stable    ClusterIP   10.96.199.44    <none>        80/TCP    65m   app=app-backend,rollouts-pod-template-hash=6c8c946c5
 
-  # Output
-  NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE   SELECTOR
-  service/app-backend-preview   ClusterIP   10.96.132.143   <none>        80/TCP    65m   app=app-backend,rollouts-pod-template-hash=5cccbf7f97
-  service/app-backend-stable    ClusterIP   10.96.199.44    <none>        80/TCP    65m   app=app-backend,rollouts-pod-template-hash=6c8c946c5
+    NAME                            ENDPOINTS          AGE
+    endpoints/app-backend-preview   10.244.0.42:8080   65m
+    endpoints/app-backend-stable    10.244.0.41:8080   65m
+    ```
+    此時，我們可以看到 `app-backend-preview` Service 導向新版本的 Pod，而 `app-backend-stable` 繼續導向舊版本的 Pod
 
-  NAME                            ENDPOINTS          AGE
-  endpoints/app-backend-preview   10.244.0.42:8080   65m
-  endpoints/app-backend-stable    10.244.0.41:8080   65m
-  ```
-
-  到這裡，我們透過 Argo Rollouts 來同時運行新舊版本的 Pod 並且會自動調整 Service 的 Label Selector，我們不在需要管理多個 Deployment。
+    通過 Argo Rollouts，我們可以同時運行新舊版本的 Pod，並自動調整 Service 的 Label Selector，不再需要手動管理多個 Deployment。
 
 # 透過 Ingress 驗證流量是否正確分派到新舊版本
-接下來只要調用正確的 Service 就能將流量往該版本發送，這裡依據 Ingress 的配置來發送流量給對應的 Service
+接下來，我們將透過 Ingress 來驗證流量是否正確分派到不同版本的 Service。
 ```shell
 # 預設請求會打向 stable-ingress
 curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1
@@ -245,10 +247,10 @@ curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1 -H "Canar
 # Output，Canary 版本的 Response
 Hello, welcome to use the container.(Canary version).
 ```
-能看到分別回應了新舊版本的 Response。
+從輸出的結果可以看到，根據不同的 Ingress 配置，流量被正確分派到新舊版本的服務。
 
 # 全量切換
-當藍綠部署（Blue/Green）對新版本的服務驗證完成後，要將流量都轉向新版本服務，並且關閉舊版本的服務，來看看 Argo Rollouts 怎麼做
+當藍綠部署（Blue/Green）驗證新版本服務沒有問題後，接下來需要將所有流量切換到新版本服務，並關閉舊版本的服務。這可以透過 Argo Rollouts 輕鬆完成。
 
 1. 透過 CLI 執行 `Promote` 完成全量切換
 ```shell
@@ -263,10 +265,12 @@ kubectl argo rollouts dashboard
 用瀏覽器開啟 Dashboard，並點選該服務的 `Promote` 按鈕來完成全量切換
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240926/截圖-2024-09-25-下午11.58.48.26lg3tpg5j.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240926/截圖-2024-09-25-下午11.58.48.26lg3tpg5j.webp)
 
-當透過 CLI 或 Dashboard 執行 `Promote` 後，能發現舊版本的 Pod 都被關閉了，而不管是 stable 還是 preview 的 Service 也都會指向新版本的 Pod，不管連到任何一個 Service 都不會有連不到服務的問題。
+不論是透過 CLI 還是 Dashboard 進行全量切換，切換完成後可以觀察到舊版本的 Pod 被自動關閉，stable 和 preview 這兩個 Service 會統一指向新版本的 Pod。這樣確保了無論使用哪個 Service，流量都會正確轉發，不會出現連線錯誤。
 
 # 小結
+今天初步認識了 Argo Rollouts 的核心概念與使用方式，透過使用 Rollouts 的 CRD 取代 Deployment 當 workload，能輕鬆的使用漸進式部署（Progressive Delivery）不需要管理大量 workload YAML。
 
+明天會將 Ingress NGINX Controller 作為 **Traffic Management** 與 Argo Rollouts 協作，簡化部署時，對 Ingress 的操作。
 
 # Refernce
 - [Ingress NGINX Controller](https://github.com/kubernetes/ingress-nginx/tree/main)
