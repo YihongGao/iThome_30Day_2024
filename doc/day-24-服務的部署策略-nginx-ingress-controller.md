@@ -9,7 +9,9 @@
 今天我們搭配 [Ingress NGINX Controller](https://github.com/kubernetes/ingress-nginx/tree/main) 來實現這兩個部署策略
 
 # 環境準備
-1. 安裝 Ingress NGINX Controller 到本地 kind 環境，能參考 [2023年/Day11文章](Day-11-Kubernetes_介紹-Ingress) 或 執行以下指令
+1. 安裝 Ingress NGINX Controller 到本地 kind 環境  
+
+參考 [2023年/Day11文章](Day-11-Kubernetes_介紹-Ingress) 或 執行以下指令
 ```shell
 cat <<EOF > kind-config.yaml
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -43,7 +45,7 @@ kubectl patch -n ingress-nginx service ingress-nginx-controller --type='json' -p
 ]'
 ```
 
-2. 部署 stable 與 canary 版本的服務
+# 部署 demo 服務
 ```shell
 kubectl apply https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/refs/heads/main/resources/day24/apps/overlays/production/deploy.yml
 ```
