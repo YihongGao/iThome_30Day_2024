@@ -210,10 +210,9 @@ kubectl exec -it ${you frontend pod name} -- curl localhost:80
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240909/截圖-2024-09-09-下午4.56.07.5j45awyrcw.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240909/截圖-2024-09-09-下午4.56.07.5j45awyrcw.webp)
 
 # 小結
-以上就是我們 NetworkPolicy 的實作，並透過基於[eBPF] 技術的觀測工具 [Hubble] 來檢視 Kubernetes 中的網路流量傳遞。
+今天介紹了如何在 kind 環境中安裝並配置 Cilium 作為 CNI，並啟用 [Hubble] 來觀察 Kubernetes 中的網路流量。透過配置不同的 NetworkPolicy，我們展示了如何使用三層架構的 Pod（Frontend、Backend、DB）進行流量控制，並通過 Hubble 的可視化介面驗證網路連接的行為。
 
-到目前為止，我們更了解 Kubernetes 的核心組件
-明天會開始進入到 CI/CD pipeline 的實作章節，透過 Kustomize 和 ArgoCD 將 2023 年介紹的陽春版 CI/CD pipeline 升級為更易於維護的版本。
+明天將進入 CI/CD pipeline 的實作，屆時我們會使用 Kustomize 和 ArgoCD，對去年的陽春版 pipeline 進行迭代，打造一個更易於維護的 CI/CD 流程。
 
 # Refernce
 - [cilium 官方](https://cilium.io/)
