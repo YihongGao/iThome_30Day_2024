@@ -243,3 +243,5 @@ https://kubernetes.io/docs/concepts/services-networking/network-policies/#prereq
 [cilium]: https://docs.cilium.io/en/stable/overview/intro/
 
 [hubble]: https://docs.cilium.io/en/stable/overview/intro/#what-is-hubble
+
+[NetworkPolicy]: https://kubernetes.io/docs/concepts/services-networking/network-policies/
