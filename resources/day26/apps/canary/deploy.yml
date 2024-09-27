@@ -46,9 +46,9 @@ spec:
       canaryService: app-backend-preview
       stableService: app-backend-stable
       steps:
-      - setWeight: 33
+      - setWeight: 10
       - pause: {}
-      - setWeight: 66
+      - setWeight: 33
       - pause: {}
       trafficRouting:
         nginx:

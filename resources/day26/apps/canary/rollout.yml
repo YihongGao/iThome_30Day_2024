@@ -57,7 +57,7 @@ spec:
             canary-by-header: Canary
             canary-by-header-value: "true"
       steps:
-      - setWeight: 33
+      - setWeight: 10
       - pause: {}
-      - setWeight: 66
+      - setWeight: 33
       - pause: {}
