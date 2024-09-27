@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: ithome
 
 resources:
-- deployment.yml
+- rollout.yml
 - stable-service.yml
 - preview-service.yml
 - stable-ingress.yml

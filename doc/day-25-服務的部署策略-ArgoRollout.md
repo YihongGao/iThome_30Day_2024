@@ -115,7 +115,7 @@ rollout.argoproj.io/app-backend   1         1         1            1           1
 NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
 pod/app-backend-6c8c946c5-6dlvx   1/1     Running   0          17m   10.244.0.41   kind-control-plane   <none>           <none>
 ```
-檢視 [Rollout 的 YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/deployment.yml) 大部分屬性與 Deployment 類似，因為兩者具有相同的核心功能。最大的差異在於 strategy，用來定義藍綠部署的配置：
+檢視 [Rollout 的 YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/rollout.yml) 大部分屬性與 Deployment 類似，因為兩者具有相同的核心功能。最大的差異在於 strategy，用來定義藍綠部署的配置：
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
