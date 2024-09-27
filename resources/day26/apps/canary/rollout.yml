@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  labels:
+    app: app-backend
+  name: app-backend
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  selector:
+    matchLabels:
+      app: app-backend
+  template:
+    metadata:
+      labels:
+        app: app-backend
+    spec:
+      containers:
+      - image: luciferstut/app-backend-for-ithome2024:none
+        imagePullPolicy: Always
+        name: apps
+        ports:
+        - containerPort: 8080
+        resources: 
+          requests:
+            cpu: "300m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "768Mi"
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          failureThreshold: 6
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          failureThreshold: 3
+          periodSeconds: 10
+  strategy:
+    canary:
+      canaryService: app-backend-preview  # required
+      stableService: app-backend-stable  # required
+      trafficRouting:
+        nginx:
+          stableIngress: primary-ingress
+          additionalIngressAnnotations:   # optional
+            canary-by-header: Canary
+            canary-by-header-value: "true"

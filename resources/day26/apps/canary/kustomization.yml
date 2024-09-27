@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ithome
+
+resources:
+- rollout.yml
+- stable-service.yml
+- preview-service.yml
+- primary-ingress.yml
+
+images:
+- name: luciferstut/app-backend-for-ithome2024:none
+  newTag: "latest"
