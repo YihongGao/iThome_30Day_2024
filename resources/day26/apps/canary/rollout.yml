@@ -56,3 +56,8 @@ spec:
           additionalIngressAnnotations:   # optional
             canary-by-header: Canary
             canary-by-header-value: "true"
+      steps:
+      - setWeight: 33
+      - pause: {}
+      - setWeight: 66
+      - pause: {}

@@ -103,7 +103,7 @@ kubectl create namespace ithome
 kubectl apply -f https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/refs/heads/main/resources/day25/apps/blue-green/deploy.yaml
 ```
 
-部署後會有下資源
+部署後會有以下資源：
 - `rollouts.argoproj.io/app-backend`：代表我們正在運行的服務。
 ```shell
 kubectl  get rollouts.argoproj.io,pod -o wide
