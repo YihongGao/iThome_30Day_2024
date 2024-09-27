@@ -1,15 +1,15 @@
 
-# Day-17 Kustomize 介紹 - Patchs
+# Day-17 Kustomize 介紹 - Patches
 
 # 前言
-昨天已經使用 Kustomize 經典的目錄結構，並透過 Overlays 與 Patchs 對不同環境的需求，進行配置調整。
+昨天已經使用 Kustomize 經典的目錄結構，並透過 Overlays 與 Patches 對不同環境的需求，進行配置調整。
 
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240914/截圖-2024-09-14-上午11.38.31.4918bfbffi.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240914/截圖-2024-09-14-上午11.38.31.4918bfbffi.webp)
 
 
-今天會針對 Patchs 的使用方式做更詳細的介紹
+今天會針對 Patches 的使用方式做更詳細的介紹
 
-# Patchs
+# Patches
 Kustomize 支援兩種不同類型的 Patch 方式，
 - JSON6902 Patch： 基於 [JSON6902 標準](https://datatracker.ietf.org/doc/html/rfc6902)
 - Strategic Merge Patch：基於 Kubernetes 的 [Strategic Merge Patch](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md)
@@ -192,6 +192,6 @@ spec:
 明天會介紹 Kustomize 的另一個功能：`Components`，這個用來跨 Overlays 的 Patch 功能。
 
 # Refernce
-- [Kustomize 官方文件 / patchs](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#name-and-kind-changes)
+- [Kustomize 官方文件 / patches](https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/patches/#name-and-kind-changes)
 - [christopher-adamson / Patches in Kustomize](https://www.linkedin.com/pulse/patches-kustomize-christopher-adamson-gaq4c)
 - [openanalytics / kustomize-best-practices](https://www.openanalytics.eu/blog/2021/02/23/kustomize-best-practices/)

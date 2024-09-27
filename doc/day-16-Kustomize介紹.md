@@ -233,7 +233,7 @@ kubectl describe deployments.apps product-backend -n ithome-dev
 # 小結
 今天介紹了 Kustomize 的核心概念，透過 Overlay 與 Patches 進行組裝與客製化，來滿足不同環境的配置需求，避免使用 Copy/Paste 配置的苦力與維運難題，讓管理 YAML 時更為容易且有效率。
 
-明天會更詳細的說明 `Patchs` 的用法，讓讀者使用時能更得心應手。
+明天會更詳細的說明 `Patches` 的用法，讓讀者使用時能更得心應手。
 
 # Refernce
 - [Kustomize 官方文件](https://kubectl.docs.kubernetes.io/)
