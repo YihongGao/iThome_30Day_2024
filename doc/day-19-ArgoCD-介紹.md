@@ -2,35 +2,35 @@
 # Day-19 ArgoCD 介紹
 
 # 前言
-去年我透過 GitLab CI 實現了 Push-based 的 GitOps，能自動將 Git Repo 中的 YAML 部署至 Kubernetes
+去年，我透過 GitLab CI 實現了 Push-based 的 GitOps，能自動將 Git Repo 中的 YAML 部署到 Kubernetes。
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.33.26lfru5jsv.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.33.26lfru5jsv.webp)
 
-雖然實現容易且架構簡單，但仍有許多值得改善的地方，例如
-1. 安全性風險：Push 模式需要暴露 cluster 的 API server，增加公開網絡中的風險。
-2. 難以擴展：隨著集群數量增加，Push 模式在多個 cluster 的管理上變得困難，尤其是跨網域時。
-3. 一致性問題：若有人為操作 Kubernetes，可能導致 cluster 與 Git Repo 不同步。
+雖然 Push 模式實現簡單且架構輕量，但仍有幾個問題需要改善：
+1. 安全性風險：Push 模式需要暴露 Cluster 的 API server，增加了公開網絡中的安全風險。
+2. 難以擴展：隨著 Cluster 數量增加，Push 模式在多 Cluster 管理，特別是跨網域時，變得困難。
+3. 一致性問題：如果有人為操作 Kubernetes，可能導致 Cluster 與 Git Repo 狀態不同步
 
-我們接下來幾天，要透過 ArgoCD 這個為了 Kubernetes 與 GitOps 而生的工具，改善這些缺點。
+3. 一致性問題：如果有人為操作 Kubernetes，可能導致 Cluster 與 Git Repo 狀態不同步
 
 # 什麼是 ArgoCD
 ![https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5JxBwyzDrpsoZJboHIdNCwZMma8GGgQ1uuQ&s](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5JxBwyzDrpsoZJboHIdNCwZMma8GGgQ1uuQ&s)
 
-ArgoCD 是一個基於 Pull-based GitOps 模型的 Kubernetes 持續交付工具。當 Git Repo 中的 YAML 定義更新時，會將異動自動部署至 Kubernetes，並持續監控 Kubernetes 與 Git Repo 的狀態，並保持狀態同步。
+ArgoCD 是一款基於 Pull-based GitOps 模型的 Kubernetes 持續交付工具。當 Git Repo 中的 YAML 文件更新時，ArgoCD 會自動將這些變更同步到 Kubernetes，並持續監控 Kubernetes 與 Git Repo 的狀態，確保雙方狀態一致。
 
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.43.8s39iv9lry.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午2.39.43.8s39iv9lry.webp)
 
-並提供豐富的開箱即用的功能
-- CLI 與 Web UI：有 UI 就給讚
-- Webhook：能依據需求進行各種串接
-- Notification：輕鬆整合 Slack 等通訊軟體，輕鬆實現告警
-- OAuth：能與 Keycloak、Google 等整合，不需額外管理一套使用者帳號
+ArgoCD 提供了豐富的開箱即用功能：
+- **CLI 與 Web UI**：有 UI 就給讚
+- **Webhook**：能依據需求進行各種串接
+- **Notification**：輕鬆整合 Slack 等通訊軟體，輕鬆實現告警
+- **OAuth**：能與 Keycloak、Google 等整合，不需額外管理一套使用者帳號
 
 廢話不多說，我們直接來體驗一下 ArgoCD
 
 # 環境準備
 
 ## 安裝 ArgoCD
-參考[官方安裝文件]，透過 Kustomize 透過 Remote resource 來安裝 ArgoCD
+根據[官方安裝文件]，使用 Kustomize 的 Remote Resource 安裝 ArgoCD
 ```yaml
 # argoCD-demo/infra/argoCD/kustomization.yml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -40,7 +40,7 @@ namespace: argocd
 resources:
 - https://raw.githubusercontent.com/argoproj/argo-cd/v2.7.2/manifests/install.yaml
 ```
-部署 ArgoCD 到 Kubernetes 中
+接著將 ArgoCD 部署到 Kubernetes 中：
 ```shell
 # pwd
 # /day19/argoCD-demo <- current folder
@@ -51,7 +51,7 @@ kubectl apply -k infra/argoCD
 ```
 
 ## 安裝 ArgoCD CLI
-Mac 直接透過 brew 安裝即可，其他平台可參閱[官方文件](https://argo-cd.readthedocs.io/en/stable/cli_installation/#installation)
+Mac 可以直接透過 Homebrew 安裝，其他平台的安裝方法可參考 [官方文件](https://argo-cd.readthedocs.io/en/stable/cli_installation/#installation)
 ```shell
 # Mac
 brew install argocd
@@ -60,11 +60,11 @@ brew install argocd
 argocd version
 ```
 ## 登入 Web UI
-Web UI 的服務也是運行在 Kubernetes 中的 Pod，所以先透過 `kubectl port-forward` 轉發到本地 8080 port，方便 Demo 存取
+ArgoCD 的 Web UI 運行於 Kubernetes 的 Pod 中，使用 `kubectl port-forward`  將 Web 服務轉發到本地的 8080 端口，方便 Demo 存取：
 ```shell
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
-開啟瀏覽器，連上 `localhost:8080` 應該能看到 ArgoCD 的 Web UI
+ArgoCD 的 Web UI 運行於 Kubernetes 的 Pod 中，使用 `kubectl port-forward`  將 Web 服務轉發到本地的 8080 端口，方便 Demo 存取：
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午3.58.49.6m3ux6bjew.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午3.58.49.6m3ux6bjew.webp)
 
 透過 `argocd` CLI，取得初始化密碼
@@ -76,13 +76,13 @@ w4sgE3j7Mb97NEzB
 
  This password must be only used for first time login. We strongly recommend you update the password using `argocd account update-password`.
 ```
-> 📘 改密碼的方式，讀者能自行參閱此篇[官方文件](https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli)
+> ⚠️ 此密碼僅用於首次登入。建議讀者參閱 [官方文件](https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli) 來修改密碼。
 
 使用 `admin` 帳號與剛取得的密碼登入
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.07.34.4xuhzzwl9n.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.07.34.4xuhzzwl9n.webp)
 
 ## 透過 ArgoCD 部署服務到 Kubernetes 
-直接利用前幾天應用 Kustomize 的 YAML 來部署，先把前幾天使用的 namespace 移除，比較方便看出 ArgoCD 的行為
+我們可以使用前幾天的 Kustomize 配置來部署服務。在此之前，先清理環境並重新創建 ithome namespace，以便觀察 ArgoCD 的部署行為：
 ```shell
 # 環境清理
 kubectl delete namespace ithome
@@ -94,23 +94,22 @@ kubectl create namespace ithome
 ![https://argo-cd.readthedocs.io/en/stable/assets/new-app.png](https://argo-cd.readthedocs.io/en/stable/assets/new-app.png)
 
 2. 填寫 Application 基本資料
-- Application：`argocd-demo`
-- Project：`default`
-- Sync Policy：`Automatic` 並勾選 `SELF HEAL`
+- **Application**：`argocd-demo`
+- **Project**：`default`
+- **Sync Policy**：`Automatic` 並勾選 `SELF HEAL`
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.23.43.8l01njdag9.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.23.43.8l01njdag9.webp)
 
 3. 填寫 Git Repo 資訊   
-  使用此 [Github Repo](https://github.com/YihongGao/iThome_30Day_2024) 當作 Manifast Repo，會將 Repo 中的 YAML 部署至 Kubernetes。
+  使用此 [Github Repo](https://github.com/YihongGao/iThome_30Day_2024) 作為 YAML 的來源，並將其中的資源部署至 Kubernetes。
 
-- Repository URL：`https://github.com/YihongGao/iThome_30Day_2024`
-- Revision：`main`
-- Path：`resources/day19/argoCD-demo/apps/overlays/production`
+- **Repository URL**：`https://github.com/YihongGao/iThome_30Day_2024`
+- **Revision**：`main`
+- **Path**：`resources/day19/argoCD-demo/apps/overlays/production`
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.31.04.8ojnl9h5vw.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.31.04.8ojnl9h5vw.webp)
 
 4. 配置要部署到哪個 Kubernetes
-- Cluster URL：`https://kubernetes.default.svc`
-> 📘 這代表部署到與安裝 ArgoCD 同一個 Kubernetes Cluster
-- Namespace：`ithome`
+- **Cluster URL**：`https://kubernetes.default.svc`（代表部署到與 ArgoCD 同一 Kubernetes Cluster）
+- **Namespace**：`ithome`
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.35.45.1e8ka7xo6f.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.35.45.1e8ka7xo6f.webp)
 
   全部填寫完成後，點選上方 **CREATE** 按鈕
@@ -120,23 +119,23 @@ kubectl create namespace ithome
   - 使用哪個 Git Repo 作為 Kubernetes 期望狀態
   - 要將 YAML 部署到哪個 Kubernetes Cluster 與 namespace
   
-  能看到 UI 介面上多了一個叫 argocd-demo 的 App
+  在 UI 介面上，能看到名為 `argocd-demo` 的 Application
   ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.46.42.8hgfpudlgh.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-17-下午4.46.42.8hgfpudlgh.webp)
 
-  並且能看到 Status 欄位有兩個狀態機
-  第一值是 **App Health** 用來表示該 ArgoCD Application 管理的 Kubernetes 運作是否正常。    
 
-  **App Health** 主要狀態有以下幾個
-  - **Healthy**：所有資源運行正常，通過健康檢查，例如 Pod 正常啟動並通過 liveness 和 readiness 檢查。
-  - **Progressing**：Application 正在部署或更新中，部分資源尚未部署完成或未達到健康狀態。
-  - **Degraded**：部分資源未正常運行，可能有 Pod 啟動失敗或 CrashLoopBackOff 等問題。
+## Application 狀態解釋
+  能看到 `argocd-demo` Application 的 Status 欄位，可以看到兩個主要狀態：
+  1. **App Health** 表示 ArgoCD 管理的 Kubernetes 資源運行情況，主要有以下幾個狀態：    
+    - **Healthy**：所有資源運行正常，並通過健康檢查（如 Pod 通過 liveness 和 readiness 檢查）。   
+    - **Progressing**：資源正在部署或更新中，部分資源尚未完全啟動或達到健康狀態。   
+    - **Degraded**：部分資源運行異常，可能有 Pod 啟動失敗或 CrashLoopBackOff 等問題。   
 
-  第二個值為 **Sync Status**，主要狀態如下
-  - **Synced（已同步）**：Application 的狀態與 Git Repo 完全一致，所有變更已成功應用到 cluster。
-  - **OutOfSync（不同步）**：Application 與 Git 中的配置不一致，可能是變更尚未同步到 cluster 或部分資源不符合預期。
+  2. Sync Status：表示 Application 的狀態是否與 Git Repo 同步：    
+    - **Synced（已同步）**：Kubernetes 狀態與 Git Repo 完全一致，所有變更已成功應用到 Cluster。   
+    - **OutOfSync（不同步）**：Application 的狀態與 Git Repo 不一致，可能是變更尚未同步到 Cluster 或部分資源不符預期。   
 
-  我們來看一下 Kubernetes 是否如 App Status 一樣運作順利。
-  
+## 驗證部署狀態
+  我們使用 kubectl 來檢查 Kubernetes 是否如 App Status 所示運作正常：
   ```shell
   kubectl get pod
 
@@ -148,21 +147,20 @@ kubectl create namespace ithome
   product-backend-5564f9975c-8m2lg    1/1     Running   0          2m30s
   product-schedule-7ccf4f66ff-vfs27   1/1     Running   0          2m27s
   ```
-  
-  能看到 Git Repo 中的 YAML 都有正確部署到 Kubernetes，接下來我們來嘗試刪除掉任一個 Git Repo 中的 Resource，例如 Deployment
+  可以看到，Git Repo 中的 YAML 已成功部署到 Kubernetes。接下來，我們嘗試刪除一個 Resource（例如 `Deployment`）來測試自動恢復功能：
   ```yaml
   kubectl delete deployment app-backend
   ```
-  > 📘 若沒有自動建立回來，能檢查一下 argocd-demo 中的 **SYNC POLICY** 是否有 Enable `AUTOMATED` 與 `SELF HEAL`
+  > 📘 若沒有自動建立回來，請檢查 `argocd-demo` 中的 **SYNC POLICY** 是否有 Enable `AUTOMATED` 與 `SELF HEAL`
 
-  能看到該 deployment 會自動被建立回來，這就是 Pull-based 與 Push-based GitOps 的最大差異，
-  - ArgoCD(Pull-based) 允許持續維持 Kubernetes 狀態與 Git Repo 中 YAML 的宣告相同。
-  - Push-based 需要依賴頻繁的發佈與嚴謹的工作流程來維持。
+  這時可以看到該 Deployment 會自動被重建。這正是 Pull-based GitOps 的優勢所在：
+  - **ArgoCD(Pull-based)**：持續監控並自動修復，確保 Kubernetes 狀態與 Git Repo 宣告一致。
+  - **Push-based**：依賴頻繁的發佈與嚴謹的工作流程來維持狀態同步。
 
 # 半自動化的方式
-若讀者的公司規範不適合使用全自動化作業時，ArgoCD 也能實現半自動化並提供良好的 Diff 介面來檢視差異。
+如果讀者的公司規範不適合使用全自動化作業，ArgoCD 也支援半自動化模式，並提供直觀的 Diff 介面來檢視 Kubernetes 與 Git Repo 之間的差異。
 
-讀者能透過以下操作體驗看看
+讀者能透過以下操作體驗半自動化的流程
 1. Disable `SELF HEAL`
 2. 更改任一資源，例如我更改 Deployment imageTag
     ```shell
@@ -173,16 +171,16 @@ kubectl create namespace ithome
   ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.47.47.4ckue7n0fz.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.47.47.4ckue7n0fz.webp)
 4. 點選下方 app-backend
   ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.49.22.99tb823atw.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.49.22.99tb823atw.webp)
-5. 展開的頁面下方有個 Diff 頁籤，能看到 Git Repo 與 Kubernetes 的當前狀態差異。
+5. 再展開的頁面下方有個 Diff 頁籤，能看到 Git Repo 與 Kubernetes 的當前狀態差異。
   ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.49.41.7ljyavd0nn.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.49.41.7ljyavd0nn.webp)
 6.當檢視完差異後，若判斷應該要同步到 Kubernetes 時，點選 **SYNC**，就能將 Git Repo 的 YAML 部署到 Kubernetes
   ![https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.51.35.6t72t4yumy.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20240917/截圖-2024-09-18-上午12.51.35.6t72t4yumy.webp)
   
 
 # 小結
-今天初步體驗了 ArgoCD 的使用方式 與 ArgoCD 能自動地保持 Git Repo 與 Kubernetes 一致性的功能，這能大幅提高使用 GitOps 模式管理時的信心度與可維護性，避免 Git Repo 與 Kubernetes 環境狀態脫鉤太久後，沒有人有勇氣再次將 Git Repo push 到 Kubernetes 中。
+今天我們初步體驗了 ArgoCD 的功能，特別是其自動保持 Git Repo 與 Kubernetes 狀態一致的能力。這大幅提升了在使用 GitOps 管理 Kubernetes 時的信心和可維護性，避免 Git Repo 與 Kubernetes 狀態脫鉤太久，導致操作風險上升。
 
-明天會繼續介紹 ArgoCD 的架構與運作原理。
+明天，我們將深入介紹 ArgoCD 的架構與運作原理。
 
 # Refernce
 - [ArgoCD 官方文件](https://argo-cd.readthedocs.io/en/stable/)

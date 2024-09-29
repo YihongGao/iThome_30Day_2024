@@ -2,37 +2,39 @@
 # Day-21 ArgoCD 介紹 - 進階功能
 
 # 前言
-今天會來介紹兩個 ArgoCD 的進階功能
+今天會來介紹三個 ArgoCD 的進階功能
 1. Sync Waves
 2. Sync Windows
 3. Alert & Notification
 
 # Sync Waves
-大部分的時候，我們的系統都是由多個服務組成的，而服務之間時常有依賴關係 (如 API 依賴)，所以我們會希望能控制每個服務的部署順序，來保證 API 的邏輯都符合預期。
+在大多數情況下，系統是由多個相互依賴的服務組成的，這些服務之間常常存在依賴關係（例如 API 依賴）。因此，我們希望能夠控制每個服務的部署順序，以確保系統的 API 邏輯運行正常。
 ### 假設服務依賴性如下
 ```mermaid
 graph LR;
     app-backend---|API dependency|product-backend
     product-backend---|API dependency|payment-backend
 ```
-我們希望的部署順序通常會是
+我們希望的部署順序為：
 1. 先部署 payment-backend 
-1. 等 payment-backend 部署完成後，再 production-backend
+1. 等 payment-backend 部署完成後，再部署 production-backend
 1. 最後部署 app-backend   
 
-這樣只要遵守 **每個服務都 API 都向前兼容一個版本** 的開發原則，就能保證服務不會中斷或出錯，不需要發佈維護或停機措施。
+這樣只要租巡 **每個服務都 API 都向前兼容一個版本** 的開發原則，就能保證服務不會中斷或出錯，避免發佈維護或停機措施。
 
-透過 ArgoCD **Sync Waves** 的功能，使用 `argocd.argoproj.io/sync-wave` 的 annotation 來指定部署順序
+透過 ArgoCD 的 **Sync Waves** 的功能，使用 `argocd.argoproj.io/sync-wave` 的 annotation 來指定部署順序
 ```yaml
 metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "5"
 ```
-所有 ArgoCD Application 管理的 resource 的 `argocd.argoproj.io/sync-wave` 預設值為 0，當 ArgoCD 部署時，會依據 `sync-wave` 的值，獨立進行有順序性與依賴性的部署。
+所有 ArgoCD Application 管理的資源，預設 `argocd.argoproj.io/sync-wave` 值為 0，部署時，會依據 `argocd.argoproj.io/sync-wave` 的值，來確保部署的順序性和依賴性：
 - 依據 `sync-wave` 值，由小至大的依序進行部署
-- 當上一個 `sync-wave` 都部署成功時，才會進行下一個 `sync-wave` 部署。
+- 當上一個 `sync-wave` 都部署成功時，才會進行下一個順位的部署。
 
-所以要滿足我們的部署順序需求時，只要於該 Resource 的 YAML 中加上 annotation 即可，例如
+
+### 例子
+要滿足我們的部署需求，只需在資源的 YAML 文件中加入 sync-wave annotation。例如：
 ```yaml
 # payment-backend
 apiVersion: apps/v1
@@ -68,9 +70,9 @@ metadata:
 > 範例 YAML 能參閱[GitHub](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day21/argoCD-demo)
 
 ## Sync Windows
-**Sync Windows** 是一種用來控制何時允許或禁止資源同步的功能，適合用於在特定時間範圍內進行自動化資源同步或阻止同步操作。當你希望在業務高峰期避免更新，或為了合規需求，僅允許在特定時段內進行應用部署時。
+**Sync Windows** 是用來控制何時允許或禁止資源同步的功能，適合在特定時間範圍內進行自動化資源同步，或阻止同步操作。例如，你可以在業務高峰期禁止更新，或者為了合規需求，僅允許在指定時段進行應用部署。
 
-**Sync Windows** 是配置再 ArgoCD AppProject 中，範例如下
+**Sync Windows** 通常配置在 ArgoCD 的 `AppProject` 中，範例如下
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -99,36 +101,35 @@ spec:
 ```
 ### 配置說明：
 - `kind`： `allow` 為允許該窗口進行同步，反之 `deny` 為不允許
-    - `schedule`：使用 cron 表達式，表達窗口的起始時間
+    - `schedule`：使用 Cron 表達式，表達窗口的起始時間
     - `duration`：該窗口持續多久
     - `applications`：定義這個窗口控制哪些 ArgoCD Application 同步，可透過 `*` 模糊比對。
     - `timeZone`：時間根據什麼時區計算
     - `namespaces`：於指定的 namespace 套用該窗口
     - `clusters`：於指定的 clusters 套用該窗口
     - `manualSync`：是否允許手動同步
-> 📘 透過 Web UI 也能進行 **Sync Windows** 的配置，路徑於 **Settings/Projects** 選擇 project，能看到 WINDOWS 頁籤 
+> 📘 Sync Windows 也可以通過 Web UI 進行配置。路徑為 Settings/Projects，選擇項目後進入 WINDOWS 頁籤進行管理。
 
-透過 ArgoCD 的 **Sync Windows** 讓自動化策略有更靈活的管理方式，不再是全自動與全手動之間的選擇題，能依據業務特性或公司部署政策來進行調配。
+透過 ArgoCD 的 **Sync Windows**，讓我們可以靈活控制自動化部署的時間策略，不再需要在全自動和全手動之間進行選擇。這讓部署策略更加符合業務特性或公司的政策需求。
 
 # Alert & Notification
 ArgoCD 提供了許多開箱即用的 Notifications 功能，如
 - Slack
 - Email
-- Webhook
+- Webhook... 等等
 
 能很輕鬆地實現告警機制，如
-- Application 同步失敗時
-- Application health check 失敗時
-- 偵測到配置被更改時
+- Application 同步失敗
+- Application health check 失敗
+- 偵測到配置被更改
 
 ## 配置方式
-Notification 的配置方式是由幾個概念組成的
-- **Templates**： 通知內容的模板
-- **Triggers**： 通知的觸發條件
-- **Subscriptions**：哪些 ArgoCD Application 要訂閱該 Triggers
+Notification 配置由以下幾個概念組成：
+- **Templates**： 通知內容的模板。
+- **Triggers**： 通知的觸發條件。
+- **Subscriptions**：哪些 ArgoCD Application 要訂閱該 Triggers。
 
-這幾個配置需要定義在 `ConfigMap/argocd-notifications-cm` 讓 ArgoCD 使用，例如
-- 當生產環境的 ArgoCD Application 出現同步失敗時，要發出告警到 Slack
+這幾個配置需要定義在 `ConfigMap/argocd-notifications-cm` 中，例如，當生產環境的 ArgoCD Application 出現同步失敗時，要發出告警到 Slack
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -163,13 +164,13 @@ data:
 
 # 小結
 在這篇文章中，我們介紹了 ArgoCD 的三個進階功能：
-- **Sync Waves**：幫助我們控制應用之間的部署順序，確保依賴關係的服務能夠按順序部署，避免應用失敗的風險。
-- **Sync Windows**：用來控制在指定的時間範圍內允許或禁止資源同步操作，這對於業務高峰期或合規需求非常實用。
-- **Alert & Notification**：提供了強大的通知系統，能針對應用狀態的變更（如同步失敗、配置變更等）及時發送通知到 Slack、Email 等平台。
+- **Sync Waves**：幫助控制應用之間的部署順序，確保有依賴關係的服務能按順序部署，減少應用部署失敗的風險。
+- **Sync Windows**：用來控制在指定時間範圍內允許或禁止資源同步操作，非常適合應對業務高峰期或合規需求。
+- **Alert & Notification**：提供強大的通知系統，能針對應用狀態變更（如同步失敗、配置變更等）即時發送通知到 Slack、Email 等平台。
 
-讓 ArgoCD 不單單只是個 YAML 的監聽器，還能實踐完成的部署策略與監控功能。
+這使得 ArgoCD 不僅僅是一個 YAML 監聽器，更能實現完善的部署策略和監控功能。
 
-明天的章節，會來回顧檢視一下 ArgoCD 到底為什麼能改善 CI/CD Pipeline 的。
+在明天的章節，我們將回顧 ArgoCD 如何改善 CI/CD Pipeline，並探討其核心優勢。
 
 # Refernce
 - [ArgoCD 官方文件](https://argo-cd.readthedocs.io/en/stable/)
