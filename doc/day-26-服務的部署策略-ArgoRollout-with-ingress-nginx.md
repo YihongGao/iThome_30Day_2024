@@ -23,9 +23,9 @@ kubectl apply -f https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/r
 ```
 
 部署後會有以下資源：
-- 1 個 Rollout： `rollouts.argoproj.io/app-backend` 代表我們正在運行的服務。
-- 2 個 Service： `service/app-backend-stable` 和`app-backend-preview`，分別對應穩定版本與新版本。
-- 2 個 Ingress： 
+- 1 個 **Rollout**： `rollouts.argoproj.io/app-backend` 代表我們正在運行的服務。
+- 2 個 **Service**： `service/app-backend-stable` 和`app-backend-preview`，分別對應穩定版本與新版本。
+- 2 個 **Ingress**： 
   - `primary-ingress`：負責穩定版本的 Ingress
   - `app-backend-primary-ingress-canary`：由 Argo Rollouts 自動建立的 Ingress
 
