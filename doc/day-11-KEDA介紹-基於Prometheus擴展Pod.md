@@ -16,7 +16,7 @@
 
 ```yaml
 git clone https://github.com/prometheus-operator/kube-prometheus.git
-kubectl create -f manifests/setup -f manifests
+kubectl create -f kube-prometheus/manifests/setup -f kube-prometheus/manifests
 ```
 安裝完成後，能在 namespace: `monitoring` 中看到 Prometheus、Grafana 相關組件。
 首先我們需要微調幾個地方
