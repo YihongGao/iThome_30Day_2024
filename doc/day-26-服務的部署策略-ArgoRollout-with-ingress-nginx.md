@@ -2,8 +2,8 @@
 # Day-26 服務的部署策略 - Argo Rollouts with Ingress Nginx Controller
 
 # 前言
-昨天介紹了 Argo Rollouts 的藍綠部署功能，今天將結合 Ingress NGINX Controller 進行**金絲雀部署（Canary）**，實現流量管理（Traffic Management）。  
-> 📘 若不使用流量管理，金絲雀部署的流量控制會受到限制，詳情請參閱[官方文件](https://argoproj.github.io/argo-rollouts/features/canary/#overview)。
+昨天介紹了 Argo Rollouts 的藍綠部署功能，今天將結合 Ingress NGINX Controller 進行**金絲雀部署（Canary）**，實現**流量管理（Traffic Management）**。  
+> 📘 若未搭配流量管理，金絲雀部署的流量控制功能會受到限制，詳情可參閱 [官方文件說明](https://argoproj.github.io/argo-rollouts/features/canary/#overview)。
 
 
 ## 環境準備
@@ -59,11 +59,12 @@ kubectl apply -f https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/r
     - `pause`：在每個階段暫停，需手動 `Promote` 才能進入下一階段。
 
 ### 這個配置與藍綠部署相似，具備以下行為：
-- 在完全切換到新版本之前，舊版本與新版本的 Pod 會同時運行。
-- 透過 stableService 和 canaryService 分別導流到對應版本的 Pod。
+- 新舊版本的 Pod 同時運行，直到完全切換到新版本。
+- 透過 `stableService` 和 `canaryService`，流量分別導向不同版本的 Pod。
 
-此外，`trafficRouting.nginx` 允許 Argo Rollouts 自動管理 Nginx Ingress 流量轉導規則，省去自行管理多組 Ingress 的麻煩。
+此外，`trafficRouting.nginx` 允許 Argo Rollouts 自動管理 Nginx Ingress 流量轉導規則，省去自行配置多組 Ingress 的麻煩。
 
+### 檢視自動生成的 Ingress：
 使用 `kubectl get ingress` 可以看到 Argo Rollouts 自動產生了一個 Ingress，其名稱格式為：`<ROLLOUT-NAME>-<INGRESS-NAME>-canary`
 ```shell
 kubectl get ingress
@@ -72,7 +73,8 @@ app-backend-primary-ingress-canary   <none>   day24.ithome.com   localhost   80 
 primary-ingress                      <none>   day24.ithome.com   localhost   80      54m
 ```
 
-另外我們可以使用 `steps` 來定義發布計畫，讓後續的版本發布能夠逐步自動或手動進行。
+### 定義發佈計劃：
+可以使用 steps 定義分階段的發布計劃，逐步自動或手動推進版本發布。
 ![https://argo-rollouts.readthedocs.io/en/stable/concepts-assets/canary-deployments.png](https://argo-rollouts.readthedocs.io/en/stable/concepts-assets/canary-deployments.png)
 
 # 驗證 金絲雀部署（Canary）的行為
@@ -137,7 +139,10 @@ primary-ingress                      <none>   day24.ithome.com   localhost   80 
                 number: 80
           pathType: ImplementationSpecific
   ```
-  我們能看到許多 Day24 介紹中用來控制流量的 Nginx Annotation，當 Argo Rollouts 使用 NGINX 作為 **Traffic Management** 時，就是透過這些 Annotation 進行流量控制，而我們只需在 Rollout YAML 中定義好發佈計畫即可，無需手動管理多組 Ingress 配置。
+  可以看到，Argo Rollouts 自動為 Canary 部署配置了 Nginx Annotation，這些 Annotation 用於控制流量分配。我們只需在 Rollout 的 YAML 中定義發佈計劃，無需手動管理多組 Ingress 配置。
+
+  > 📘 這些 Annotation 與 Day24 透過 Ingress NGINX Controller 實現金絲雀部署時使用的相同，所以我們從這裡知道 Argo Rollouts 也是透過操控 Ingress NGINX Controller Annotation 來進行 **流量管理（Traffic Management）**
+
       
 # 逐步開放流量
 開啟 [Argo Rollouts Dashboard](https://argoproj.github.io/argo-rollouts/dashboard/) 能看到這個 Rollout 目前的發布了 10% 流量到新版本

@@ -33,68 +33,68 @@
 1. 安裝 Ingress NGINX Controller 到本地 kind 環境
     > 若於 Day24 安裝過 Ingress NGINX Controller，可跳過此步驟
     
-參考 [2023年/Day11文章](Day-11-Kubernetes_介紹-Ingress) 或 執行以下指令
-```shell
-cat <<EOF > kind-config.yaml
-apiVersion: kind.x-k8s.io/v1alpha4
-kind: Cluster
-nodes:
-- role: control-plane
-  kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            node-labels: "ingress-ready=true"
-  extraPortMappings:
-  - containerPort: 30000
-    hostPort: 30000
-    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
-    protocol: tcp # Optional, defaults to tcp
-  - containerPort: 30001
-    hostPort: 30001
-    listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
-    protocol: tcp # Optional, defaults to tcp
-EOF
+    參考 [2023年/Day11文章](Day-11-Kubernetes_介紹-Ingress) 或 執行以下指令
+    ```shell
+    cat <<EOF > kind-config.yaml
+    apiVersion: kind.x-k8s.io/v1alpha4
+    kind: Cluster
+    nodes:
+    - role: control-plane
+      kubeadmConfigPatches:
+          - |
+            kind: InitConfiguration
+            nodeRegistration:
+              kubeletExtraArgs:
+                node-labels: "ingress-ready=true"
+      extraPortMappings:
+      - containerPort: 30000
+        hostPort: 30000
+        listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+        protocol: tcp # Optional, defaults to tcp
+      - containerPort: 30001
+        hostPort: 30001
+        listenAddress: "0.0.0.0" # Optional, defaults to "0.0.0.0"
+        protocol: tcp # Optional, defaults to tcp
+    EOF
 
-kind create cluster --config kind-config.yaml
+    kind create cluster --config kind-config.yaml
 
-kubectl apply --filename https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+    kubectl apply --filename https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
 
-kubectl patch -n ingress-nginx service ingress-nginx-controller --type='json' -p='[
-  {"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30000},
-  {"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30001}
-]'
-```
+    kubectl patch -n ingress-nginx service ingress-nginx-controller --type='json' -p='[
+      {"op": "replace", "path": "/spec/ports/0/nodePort", "value": 30000},
+      {"op": "replace", "path": "/spec/ports/1/nodePort", "value": 30001}
+    ]'
+    ```
 2. 安裝 Argo Rollouts 到 Kubernetes  
 
-參考 [官方文件](https://argoproj.github.io/argo-rollouts/installation/#controller-installation) 執行以下安裝指令
-```shell
-kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
-```
-執行完成後，會建立一個 namespace：argo-rollouts 並運行 Argo Rollouts controller。
-```shell
-kubectl get deployments.apps,pod -n argo-rollouts 
-```
+    依據 [官方文件](https://argoproj.github.io/argo-rollouts/installation/#controller-installation) 執行以下安裝指令
+    ```shell
+    kubectl create namespace argo-rollouts
+    kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+    ```
+    執行完成後，會建立一個 namespace：argo-rollouts 並運行 Argo Rollouts controller。
+    ```shell
+    kubectl get deployments.apps,pod -n argo-rollouts 
+    ```
 2. 安裝 Argo Rollout Kubectl Plugin
-透過 Brew 安裝或參考 [官方文件其他安裝方式](https://argoproj.github.io/argo-rollouts/installation/#kubectl-plugin-installation)
-```shell
-brew install argoproj/tap/kubectl-argo-rollouts
-```
-檢查安裝是否成功
-```shell
-kubectl argo rollouts version
+    Mac 能透過 Brew 安裝 或 參考 [官方文件其他安裝方式](https://argoproj.github.io/argo-rollouts/installation/#kubectl-plugin-installation)
+    ```shell
+    brew install argoproj/tap/kubectl-argo-rollouts
+    ```
+    檢查安裝是否成功
+    ```shell
+    kubectl argo rollouts version
 
-# Output
-kubectl-argo-rollouts: v1.7.2+59e5bd3
-BuildDate: 2024-08-13T18:29:47Z
-GitCommit: 59e5bd385c031600f86075beb9d77620f8d7915e
-GitTreeState: clean
-GoVersion: go1.21.13
-Compiler: gc
-Platform: darwin/amd64
-```
+    # Output
+    kubectl-argo-rollouts: v1.7.2+59e5bd3
+    BuildDate: 2024-08-13T18:29:47Z
+    GitCommit: 59e5bd385c031600f86075beb9d77620f8d7915e
+    GitTreeState: clean
+    GoVersion: go1.21.13
+    Compiler: gc
+    Platform: darwin/amd64
+    ```
 
 # 部署 Demo 服務
 執行以下指令，將此 [Github repo](https://github.com/YihongGao/iThome_30Day_2024/tree/main/resources/day25/apps/blue-green) 的 Demo 服務部署到 `ithome` namespeace
@@ -104,73 +104,56 @@ kubectl apply -f https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/r
 ```
 
 部署後會有以下資源：
-- `rollouts.argoproj.io/app-backend`：代表我們正在運行的服務。
-```shell
-kubectl  get rollouts.argoproj.io,pod -o wide
+- 1 個 Rollout： `rollouts.argoproj.io/app-backend` 代表我們正在運行的服務。
+- 2 個 Service： `service/app-backend-stable` 和`app-backend-preview`，分別對應穩定版本與新版本。
+- 2 個 Ingress： 
+  - `primary-ingress`：負責穩定版本的 Ingress
+  - `canary-ingress`：負責新版本版本的 Ingress
 
-# Output
-NAME                              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-rollout.argoproj.io/app-backend   1         1         1            1           17m
+能使用 `kubectl get rollouts.argoproj.io` 檢視 Rollout 資源
+  ```shell
+  kubectl get rollouts.argoproj.io,pod -o wide
 
-NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
-pod/app-backend-6c8c946c5-6dlvx   1/1     Running   0          17m   10.244.0.41   kind-control-plane   <none>           <none>
-```
-檢視 [Rollout 的 YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/rollout.yml) 大部分屬性與 Deployment 類似，因為兩者具有相同的核心功能。最大的差異在於 strategy，用來定義藍綠部署的配置：
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: app-backend
-spec:
-  ...
-  strategy:
-    blueGreen: 
-      # activeService specifies the service to update with the new template hash at time of promotion.
-      # This field is mandatory for the blueGreen update strategy.
-      activeService: app-backend-stable
-      # previewService specifies the service to update with the new template hash before promotion.
-      # This allows the preview stack to be reachable without serving production traffic.
-      # This field is optional.
-      previewService: app-backend-preview
-      # autoPromotionEnabled disables automated promotion of the new stack by pausing the rollout
-      # immediately before the promotion. If omitted, the default behavior is to promote the new
-      # stack as soon as the ReplicaSet are completely ready/available.
-      # Rollouts can be resumed using: `kubectl argo rollouts promote ROLLOUT`
-      autoPromotionEnabled: false
-```
-依此為例
-- `strategy`：定義部署策略。
-  - `blueGreen`：使用藍綠部署模式
-      - `activeService`：用於穩定版本的 Pod，作為流量入口的 Kubernetes Service。
-      - `previewService`：用於新版本的 Pod，作為流量入口的 Kubernetes Service。
-      - `autoPromotionEnabled`：控制當新版本的 Pod 準備就緒時，是否自動切換流量，並關閉舊版本的 Pod。
+  # Output
+  NAME                              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+  rollout.argoproj.io/app-backend   1         1         1            1           17m
 
-在 Rollout 更新時，會同時運行新舊版本的 Pod，並透過 `activeService` 和 `previewService` 將流量導向相應的版本。
+  NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                 NOMINATED NODE   READINESS GATES
+  pod/app-backend-6c8c946c5-6dlvx   1/1     Running   0          17m   10.244.0.41   kind-control-plane   <none>           <none>
+  ```
+  Rollout 資源能理解為 Deployment 的子類別，擁有更多的部署策略可使用。所以檢視 [Rollout 的 YAML](https://github.com/YihongGao/iThome_30Day_2024/blob/main/resources/day25/apps/blue-green/rollout.yml)時，能發現大部分屬性與 Deployment 相同，因為兩者具有相同的核心功能。
 
-- `service/app-backend-stable`、`app-backend-preview`：分別作為舊版和新版服務的流量入口。初始狀態下，兩者都指向同一個 Pod，但在新版本出現時，`app-backend-preview` 會自動將流量轉向新版本 Pod。
-```shell
-kubectl get svc,ep
+  當要使用進階的部署策略時，可透過strategy欄位進行配置，如此例使用 **藍綠部署（Blue/Green）**
+  ```yaml
+  apiVersion: argoproj.io/v1alpha1
+  kind: Rollout
+  metadata:
+    name: app-backend
+  spec:
+    ...
+    strategy:
+      blueGreen: 
+        # activeService specifies the service to update with the new template hash at time of promotion.
+        # This field is mandatory for the blueGreen update strategy.
+        activeService: app-backend-stable
+        # previewService specifies the service to update with the new template hash before promotion.
+        # This allows the preview stack to be reachable without serving production traffic.
+        # This field is optional.
+        previewService: app-backend-preview
+        # autoPromotionEnabled disables automated promotion of the new stack by pausing the rollout
+        # immediately before the promotion. If omitted, the default behavior is to promote the new
+        # stack as soon as the ReplicaSet are completely ready/available.
+        # Rollouts can be resumed using: `kubectl argo rollouts promote ROLLOUT`
+        autoPromotionEnabled: false
+  ```
+  依此為例
+  - `strategy`：定義部署策略。
+    - `blueGreen`：使用藍綠部署模式
+        - `activeService`：用於穩定版本的 Pod，作為流量入口的 Kubernetes Service。
+        - `previewService`：用於新版本的 Pod，作為流量入口的 Kubernetes Service。
+        - `autoPromotionEnabled`：控制當新版本的 Pod 準備就緒時，是否自動切換流量，並關閉舊版本的 Pod。
 
-# Output
-NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
-service/app-backend-preview   ClusterIP   10.96.132.143   <none>        80/TCP    18m
-service/app-backend-stable    ClusterIP   10.96.199.44    <none>        80/TCP    18m
-
-NAME                            ENDPOINTS          AGE
-endpoints/app-backend-preview   10.244.0.41:8080   18m
-endpoints/app-backend-stable    10.244.0.41:8080   18m
-```
-
--`ingress/stable-ingress`、`ingress/canary-ingress`：與 Day24 相同，僅是個單純的 Ingress，會監聽 `http://day24.ithome.com:30000` ，並依照流量控制將流量轉發到不同版本的服務。
-
-```shell
-kubectl get ingress
-
-# Output
-NAME             CLASS    HOSTS              ADDRESS     PORTS   AGE
-canary-ingress   <none>   day24.ithome.com   localhost   80      17m
-stable-ingress   <none>   day24.ithome.com   localhost   80      18m
-```
+  在 Rollout 更新時，會同時運行新舊版本的 Pod，並透過 `activeService` 和 `previewService` 將流量導向相應的版本。
 
 驗證一下 Demo 服務是否運作正常
 ```shell
@@ -250,7 +233,7 @@ Hello, welcome to use the container.(Canary version).
 從輸出的結果可以看到，根據不同的 Ingress 配置，流量被正確分派到新舊版本的服務。
 
 # 全量切換
-當藍綠部署（Blue/Green）驗證新版本服務沒有問題後，接下來需要將所有流量切換到新版本服務，並關閉舊版本的服務。這可以透過 Argo Rollouts 輕鬆完成。
+當藍綠部署（Blue/Green）驗證新版本服務沒有問題後，將所有流量切換到新版本服務，並關閉舊版本的服務。這可以透過 Argo Rollouts 輕鬆完成。
 
 1. 透過 CLI 執行 `Promote` 完成全量切換
 ```shell
