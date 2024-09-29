@@ -13,6 +13,7 @@ spec:
   podMetricsEndpoints:
   - port: web
     path: /actuator/prometheus
+    interval: 10s
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]  # 來自 Pod 的 Label "rollouts-pod-template-hash"
       targetLabel: rollouts_pod_template_hash  # 在 metrics 中的 Label 名稱

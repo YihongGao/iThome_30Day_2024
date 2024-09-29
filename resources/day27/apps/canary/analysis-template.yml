@@ -8,7 +8,7 @@ spec:
   - name: canary-hash
   metrics:
   - name: success-rate
-    initialDelay: 1m
+    initialDelay: 30m
     interval: 1m
     # NOTE: prometheus queries return results in the form of a vector.
     # So it is common to access the index 0 of the returned array to obtain the value
@@ -19,8 +19,8 @@ spec:
         address: http://prometheus-k8s.monitoring.svc.cluster.local:9090
         query: |
           sum(rate(
-            http_server_requests_seconds_count{status!~"5.*", pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+            http_server_requests_seconds_count{status!~"5.*", pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[5m]
           )) /
           sum(rate(
-            http_server_requests_seconds_count{pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+            http_server_requests_seconds_count{pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[5m]
           ))

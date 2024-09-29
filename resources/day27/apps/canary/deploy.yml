@@ -39,7 +39,7 @@ spec:
   - name: canary-hash
   metrics:
   - failureLimit: 3
-    initialDelay: 1m
+    initialDelay: 30m
     interval: 1m
     name: success-rate
     provider:
@@ -47,10 +47,10 @@ spec:
         address: http://prometheus-k8s.monitoring.svc.cluster.local:9090
         query: |-
           sum(rate(
-            http_server_requests_seconds_count{status!~"5.*", pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+            http_server_requests_seconds_count{status!~"5.*", pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[5m]
           )) /
           sum(rate(
-            http_server_requests_seconds_count{pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+            http_server_requests_seconds_count{pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[5m]
           ))
     successCondition: isNaN(result[0]) || result[0] >= 0.95
 ---
@@ -141,7 +141,8 @@ metadata:
   namespace: ithome
 spec:
   podMetricsEndpoints:
-  - path: /actuator/prometheus
+  - interval: 10s
+    path: /actuator/prometheus
     port: web
     relabelings:
     - sourceLabels:
