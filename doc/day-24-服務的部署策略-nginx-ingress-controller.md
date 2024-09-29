@@ -49,7 +49,7 @@ kubectl patch -n ingress-nginx service ingress-nginx-controller --type='json' -p
 ```shell
 kubectl apply https://raw.githubusercontent.com/YihongGao/iThome_30Day_2024/refs/heads/main/resources/day24/apps/overlays/production/deploy.yml
 ```
-能看到 ithome namespace 中有兩個 Deployment, Service
+能看到 `ithome` namespace 中有兩個 Deployment, Service
 ```shell
 kubectl get deployments.apps,service,ep 
 
@@ -79,7 +79,7 @@ stable-ingress   <none>   day24.ithome.com   localhost   80      29m
 - `stable-ingress`：將流量導向 stable 版本的服務
 - `canary-ingress`：將流量導向 canary 版本的服務
 
-兩個都會監聽 `http://day24.ithome.com:30000` 的請求，會依照流量控制將流量轉發到不同版本的服務
+兩個都會監聽 `http://day24.ithome.com:30000` 的請求，根據流量控制規則將流量分配到不同的服務版本。
 
 # 透過 Ingress 控制流量
 來看一下這兩個 Ingress 的配置哪裡不同。
@@ -127,12 +127,13 @@ spec:
 ```
 除了導向的 Service 不同之外，控制流量的關鍵配置是以下三個 Annotation
 - `nginx.ingress.kubernetes.io/canary`：啟用 Canary 功能
-- `nginx.ingress.kubernetes.io/canary-by-header`：設置 Canary 請求需要有 Header 的 key 值為 Canary。
-- `nginx.ingress.kubernetes.io/canary-by-header-value`：當 Header 中 Canary: true 時，請求會被導向 Canary 版本。
+- `nginx.ingress.kubernetes.io/canary-by-header`：設置 Canary 請求需要有 Header 的 key 值為 `Canary`。
+- `nginx.ingress.kubernetes.io/canary-by-header-value`：當 Header 中 Canary: `true` 時，請求會被導向 Canary 版本。
 
 ## 藍綠部署（Blue/Green）
 透過這些 Annotation 控制流量，就能在新版本對外發佈之前，使用指定 Header 的方式，進行新版本的功能性驗證，在對外發佈新版本，來實現 **藍綠部署（Blue/Green）**。
 
+### 調用 Stable 版本
 使用 curl 調用服務
 ```shell 
 # call stable version
@@ -141,6 +142,7 @@ curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1
 Hello, ConfigMap from `Product` enviorment.
 ```
 
+### 調用 Canary 版本
 當加上指定 Header 後，流量會導向新版本服務
 ```shell 
 # call canary version
@@ -150,16 +152,17 @@ curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1 -H "Canar
 Hello, ConfigMap from `Product` enviorment.(Canary version)
 ```
 
-新版本發佈方式只要更改 stable-ingress 的 `spec.rules[0].http.paths[0].backend.service` 到新版本的 Service，後續 Nginx Ingress Controller 會將全部流量到新版本。
+### 更新流量至新版本
+當新版本已驗證成功時，只需更新 `stable-ingress` 的 `spec.rules[0].http.paths[0].backend.service` 到新版本的 Service，Nginx Ingress Controller 會將所有流量切換至新版本。
 
 ## 金絲雀部署（Canary）
-我們添加一個 Annotation 到 canary-ingrss 上，將 50% 的流量導向 Canary 版本
+我們添加一個 Annotation 到 `canary-ingrss` 上，將 50% 的流量導向 Canary 版本
 ```shell
 `kubectl annotate ingress canary-ingress nginx.ingress.kubernetes.io/canary-weight="50"`
 ```
 - `nginx.ingress.kubernetes.io/canary-weight`：指定幾％的流量請求會被導向 Canary 版本。
 
-curl 不指定 Header，約有一半的流量會導向新版本
+接著使用 `curl` 測試，不指定 Header，系統會隨機將約一半的流量導向新版本：
 ```shell
 # 連打 10 次 curl
 for i in {1..10}; do curl day24.ithome.com:30000 --resolve day24.ithome.com:30000:127.0.0.1; echo ""; done
@@ -176,7 +179,7 @@ Hello, ConfigMap from `Product` enviorment.(Canary version)
 Hello, ConfigMap from `Product` enviorment.
 ```
 
-透過百分比流量控制的方式，依據新版本的運作是否正確，緩慢提高 `nginx.ingress.kubernetes.io/canary-weight` 的值，就能實現 **金絲雀部署（Canary）**，降低新版本故障的爆炸範圍。
+透過百分比流量控制的方式，我們能依據新版本的運作狀況，逐步提高或減少 `nginx.ingress.kubernetes.io/canary-weight` 的值，實現 **金絲雀部署（Canary）**，以減少新版本發佈時的風險，防止故障大規模擴散。
 
 # 小結
 今天演練了如何使用 Ingress NGINX Controller 實現 Kubernetes 中的兩種部署策略：藍綠部署（Blue/Green） 和 金絲雀部署（Canary）。
