@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+  - name: pod-name
+  - name: canary-hash
+  metrics:
+  - name: success-rate
+    initialDelay: 1m
+    interval: 1m
+    # NOTE: prometheus queries return results in the form of a vector.
+    # So it is common to access the index 0 of the returned array to obtain the value
+    successCondition: isNaN(result[0]) || result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus-k8s.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(
+            http_server_requests_seconds_count{status!~"5.*", pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+          )) /
+          sum(rate(
+            http_server_requests_seconds_count{pod=~"{{args.pod-name}}.*", rollouts_pod_template_hash="{{args.canary-hash}}"}[1m]
+          ))

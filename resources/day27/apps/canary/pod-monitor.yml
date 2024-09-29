@@ -1,0 +1,18 @@
+# pod-monitor.yml
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: spring-boot-prometheus-exporter
+  namespace: ithome
+  labels:
+    scrape: spring-boot-prometheus-exporter
+spec:
+  selector:
+    matchLabels:
+      scrape: spring-boot-prometheus-exporter
+  podMetricsEndpoints:
+  - port: web
+    path: /actuator/prometheus
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_label_rollouts_pod_template_hash]  # 來自 Pod 的 Label "rollouts-pod-template-hash"
+      targetLabel: rollouts_pod_template_hash  # 在 metrics 中的 Label 名稱
