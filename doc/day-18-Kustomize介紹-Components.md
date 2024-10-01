@@ -1,4 +1,3 @@
-
 # Day-18 Kustomize 介紹 - Components
 
 # 前言

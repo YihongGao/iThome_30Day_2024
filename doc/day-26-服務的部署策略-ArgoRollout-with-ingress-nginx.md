@@ -1,4 +1,3 @@
-
 # Day-26 服務的部署策略 - Argo Rollouts with Ingress Nginx Controller
 
 # 前言

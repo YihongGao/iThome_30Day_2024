@@ -1,4 +1,3 @@
-
 # Day-24 服務的部署策略 - Ingress NGINX Controller
 
 # 前言
