@@ -139,6 +139,18 @@ mvn verify
 ![https://github.com/YihongGao/picx-images-hosting/raw/master/20241003/截圖-2024-10-03-下午11.28.06.58hcgg3vuo.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20241003/截圖-2024-10-03-下午11.28.06.58hcgg3vuo.webp)
 開發者能從 **Artifacts** 區塊中下載弱點報告，進行弱點排除。
 
+# 與 SonarQube 整合
+**Dependency-Check** 也能透過 [dependency-check-sonar-plugin](https://github.com/dependency-check/dependency-check-sonar-plugin?tab=readme-ov-file) 無縫的 **SonarQube** [Quality Gate](https://docs.sonarsource.com/sonarqube/latest/instance-administration/analysis-functions/quality-gates/) 進行整合， 作為控管代碼品質與弱點防護的控制點，每次建構軟體成品時，當發現 OSS 超過閥值時，則中斷部署。
+![https://github.com/YihongGao/picx-images-hosting/raw/master/20241007/截圖-2024-10-07-下午7.48.55.4jo31xe2td.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20241007/截圖-2024-10-07-下午7.48.55.4jo31xe2td.webp)
+
+除了能控制部署流之外，也能透過 UI 方便的檢視弱點掃描報告。
+### Project Scan Summary
+![https://miro.medium.com/v2/resize:fit:2000/format:webp/1*kGiQJ5IxTnMqiJTtmQmEsA.png](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*kGiQJ5IxTnMqiJTtmQmEsA.png)
+圖檔來源：[SonarQube & OWASP Dependency Check for Java Project](https://medium.com/@giannakopoulosj/sonarqube-owasp-dependency-check-for-java-7431b9620d6c)
+### Vulnerability Details
+![https://miro.medium.com/v2/resize:fit:2000/format:webp/1*a7s1Vd8XSQvQGXD-8SWNug.png](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*a7s1Vd8XSQvQGXD-8SWNug.png)
+圖檔來源：[SonarQube & OWASP Dependency Check for Java Project](https://medium.com/@giannakopoulosj/sonarqube-owasp-dependency-check-for-java-7431b9620d6c)
+
 # 小結
 今天介紹了如何使用 **Dependency-Check** 改善傳統低頻率且被動的弱點掃描計畫，將其自動化整合到 CI/CD Pipeline，以便在軟體專案建構過程中進行 Library 弱點掃描，避免弱點進入生產環境。這樣的方式不僅能強化了軟體開發流程中的安全防護，也有效減少了人工檢查的時間與成本。
 
@@ -147,7 +159,7 @@ mvn verify
 - [OWASP（Open Web Application Security Project]
 - [How Snyk helps satisfy White House cybersecurity recommendations]
 - [組み込んだOSSコンポーネントの更新漏れを可視化する「OWASP Dependency Check」](https://codezine.jp/article/detail/9608?p=2)
-
+- [SonarQube & OWASP Dependency Check for Java Project](https://medium.com/@giannakopoulosj/sonarqube-owasp-dependency-check-for-java-7431b9620d6c)
 
 [Dependency-Check]: https://jeremylong.github.io/DependencyCheck/
 [OWASP（Open Web Application Security Project]: https://owasp.org/
