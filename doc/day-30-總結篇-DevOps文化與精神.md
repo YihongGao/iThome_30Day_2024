@@ -1,4 +1,4 @@
-# Day-30 總結篇
+# Day-30 總結篇 - DevOps 文化/精神
 
 終於來到了最後一天，來總結一下這一個月來所涵蓋的主題。
 
@@ -39,8 +39,41 @@
 圖檔來自 [Feature Toggle Makes Development Faster and Safer @ TECHPULSE 2023](https://speakerdeck.com/line_developers_tw/feature-toggle-makes-development-faster-and-safer-at-techpulse-2023)
 
 ## DevSecOps
+- **安全性測試左移**：將弱點掃描融入 CI/CD 流程，取代傳統高延遲的季/年掃描計畫，避免弱點進入生產環境。
+- **自動化整合**：將掃描作業自動化，避免增加人力成本 與 產生人為失誤。
+ ![https://github.com/YihongGao/picx-images-hosting/raw/master/20241007/截圖-2024-10-07-下午7.48.55.4jo31xe2td.webp](https://github.com/YihongGao/picx-images-hosting/raw/master/20241007/截圖-2024-10-07-下午7.48.55.4jo31xe2td.webp)
 
- 
+# DevOps 文化/精神
+在這個月的學習過程中，讀者應該已經注意到，我們討論的主題不僅涉及到開發者（Developer）的技能，還包括許多維運人員（Operator）日常關注的知識與工具。這正是 [DevOps](https://aws.amazon.com/tw/devops/what-is-devops/) 文化的核心精神——打破開發與運維之間的隔閡，讓團隊共同負責應用服務的 **可靠性（Reliability）**、**擴展性（Scalability）**、**可維護性（Maintainability）** 和 **安全性（Security）**。
+
+DevOps 強調跨團隊協作，通過自動化工具和流程統一管理應用的開發、部署和運維，實現更快速、可靠的軟體交付。透過這種文化，開發者和運維人員能夠共同掌握應用的全生命周期，從開發測試到生產環境的管理，讓軟體應用有更好的品質。
+
+# 與 Kubernetes 相伴的未來
+
+## AI
+在這個 AI 崛起的時代，除了 Copilot 這類 AI 協作軟體開發工具，也許能嘗試讓 AI 技術來協助我們 Kubernetes 的應用，如 [K8sGPT](https://k8sgpt.ai/) 等工具，讓 生成式 AI 協助我們進行錯誤診斷 與 問題排查，來更輕鬆的使用/管理 Kubernetes。
+
+## Service Mash
+隨著微服務架構的普及，Kubernetes Cluster 中通常會運行大量微服務，甚至有多 Cluster 之間需要互相溝通，這使得開發/管理越來越複雜。透過 [Istio](https://istio.io/) 這類 **Service Mash** 的解決方案，能避免對應用程序做侵入式的改動，透過 eBPF 或 Sidercar 來管理/控制網路流量。    
+
+### 使用案例：
+- [整合 OpenTelemetry](https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/)
+- [實現 mTLS](https://istio.io/latest/docs/tasks/security/authentication/mtls-migration/)
+- [實現 熔斷（Circuit Breaking）](https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/)
+
+
+## Serverless
+Kubernetes 也能透過 [Knative](https://knative.dev/docs/) 這樣的工具實現 [Serverless](https://aws.amazon.com/cn/blogs/china/iaas-faas-serverless/)，提供統一的部署方式，讓開發者專注在商業邏輯，減少對底層的知識門檻。
+
+**Serverless** 基於 Http/Event 的擴展能力，也能應用在購物網站這類流量波鋒特別大的服務，搭配具有快速啟動的應用程序（如 [Golang](https://go.dev/) 或 [native-image](https://www.graalvm.org/latest/reference-manual/native-image/)），即能降低冷啟動的延遲問題。
+
+# 結語
+感謝各位的閱讀，以上就是今年鐵人賽的分享，希望能讓大家理解 Kubernetes 的運作原理 與 更多應用方式，透過這些知識讓 Kubernetes 與 應用程序 產生更深度的協作，提供夠穩定、可靠的服務。
+
+感謝各位的閱讀，透過今年的鐵人賽分享，希望有讓大家對 Kubernetes 的運作原理有了更深入的理解，並學到了更多應用的實踐方式。希望這些知識能幫助大家在工作中與 Kubernetes 建立更緊密的協作關係，打造出穩定、可靠且高效的應用服務。
+
+
+
 
 # Refernce
 - [The journey of a Pod: A guide to the world of Pod Lifecycle](https://www.qikqiak.com/img/posts/pod-workflow.png)
@@ -50,3 +83,6 @@
 - [ArgoCD 官方網站](https://argo-cd.readthedocs.io/en/stable/assets/argocd_architecture.png)
 - [Argo Rollouts progressive delivery with Canary deployment](https://jamalshahverdiev.medium.com/argo-rollouts-canary-deployment-5c035ac7a8d4)
 - [Feature Toggle Makes Development Faster and Safer @ TECHPULSE 2023](https://speakerdeck.com/line_developers_tw/feature-toggle-makes-development-faster-and-safer-at-techpulse-2023)
+
+- [AWS/ What is DevOps](https://aws.amazon.com/tw/devops/what-is-devops/)
+
