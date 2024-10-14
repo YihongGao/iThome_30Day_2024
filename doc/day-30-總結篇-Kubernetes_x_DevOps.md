@@ -1,4 +1,4 @@
-# Day-30 總結篇 - DevOps 文化/精神
+# Day-30 總結篇 - Kubernetes x DevOps
 
 終於來到了最後一天，來總結一下這一個月來所涵蓋的主題。
 
